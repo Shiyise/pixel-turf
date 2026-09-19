@@ -3,9 +3,10 @@ const SUITS = ["♠","♥","♦","♣"];
 const RANK_NAMES = {11:"J",12:"Q",13:"K",14:"A"};
 const HAND_NAMES = ["高牌","一对","两对","三条","顺子","同花","葫芦","四条","同花顺"];
 const SB = 10, BB = 20;
+const VIP_SB = 200, VIP_BB = 400;
 const BOT_NAMES = ["BOT-1","BOT-2","BOT-3"];
 
-/* 锦标赛配置 */
+/* 锦标赛配置（普通 / VIP 高注） */
 const TOUR = {
   buyin: 500,
   startChips: 1500,
@@ -13,10 +14,19 @@ const TOUR = {
   blinds: [[10,20],[20,40],[40,80],[80,160],[150,300],[300,600],[500,1000],[1000,2000],[2000,4000]],
   prizes: {1:1500, 2:500}, // 名次奖金
 };
+const TOUR_VIP = {
+  buyin: 5000,
+  startChips: 15000,
+  handsPerLevel: 8,
+  blinds: [[100,200],[200,400],[400,800],[800,1600],[1500,3000],[3000,6000],[5000,10000],[10000,20000],[20000,40000]],
+  prizes: {1:15000, 2:5000},
+};
 
 const PokerModule = (()=>{
   let P = null;  // 当前手牌局状态
   let T = null;  // 锦标赛状态（null = 现金桌/未开赛）
+  let vip = false;
+  const cashBlinds = ()=> vip ? [VIP_SB,VIP_BB] : [SB,BB];
 
   /* ---------- 牌组 ---------- */
   function newDeck(){
@@ -108,35 +118,43 @@ const PokerModule = (()=>{
   function seatedPlayers(){ return P.players.filter(p=>!p.out); }
   function canActPlayers(){ return P.players.filter(p=>!p.folded&&!p.allin&&!p.out); }
   function currentBlinds(){
-    if(!T) return [SB,BB];
-    const lv=Math.min(TOUR.blinds.length-1, Math.floor((T.handNo-1)/TOUR.handsPerLevel));
-    return TOUR.blinds[lv];
+    if(!T) return cashBlinds();
+    const cfg=T.cfg||TOUR;
+    const lv=Math.min(cfg.blinds.length-1, Math.floor((T.handNo-1)/cfg.handsPerLevel));
+    return cfg.blinds[lv];
   }
 
   /* ---------- 开局 ---------- */
   function startCash(){
     T=null;
-    if(GameState.coins<BB){ addCoins(200); toast("扑克室救助金 +G200"); }
+    const [,bb]=cashBlinds();
+    if(GameState.coins<bb*10){
+      if(vip){ toast("VIP 桌至少带 G"+(bb*10)+" 上桌，先回普通桌或地图"); return; }
+      if(GameState.coins<BB){ addCoins(200); toast("扑克室救助金 +G200"); }
+    }
+    const botChips=vip?50000:1000;
     const players=makePlayers([
       {chips:GameState.coins},
-      {chips:1000},{chips:1000},{chips:1000},
+      {chips:botChips},{chips:botChips},{chips:botChips},
     ]);
     beginHand(players,"cash");
   }
 
   function startTournament(){
     if(T&&T.finished) T=null;
+    const cfg=vip?TOUR_VIP:TOUR;
     if(!T){
-      if(GameState.coins<TOUR.buyin){ toast("金币不足，报名费 G"+TOUR.buyin); return; }
-      addCoins(-TOUR.buyin);
+      if(GameState.coins<cfg.buyin){ toast("金币不足，报名费 G"+cfg.buyin); return; }
+      addCoins(-cfg.buyin);
       T={
+        cfg, vip,
         handNo:0, finished:false, eliminations:[],
         players:makePlayers([
-          {chips:TOUR.startChips},{chips:TOUR.startChips},
-          {chips:TOUR.startChips},{chips:TOUR.startChips},
+          {chips:cfg.startChips},{chips:cfg.startChips},
+          {chips:cfg.startChips},{chips:cfg.startChips},
         ]).map(p=>({id:p.id,name:p.name,human:p.human,chips:p.chips,out:false})),
       };
-      log("锦标赛开始 · 买入 G"+TOUR.buyin);
+      log("锦标赛开始 · 买入 G"+cfg.buyin);
     }
     // 回滚未完成手：恢复到本手开始时的筹码快照
     if(T.savedChips) T.players.forEach(p=>{ p.chips=T.savedChips[p.id]; });
@@ -192,11 +210,13 @@ const PokerModule = (()=>{
   const STAGE_ORDER=["preflop","flop","turn","river","showdown"];
   function setStageTag(){
     if(P.mode==="tournament"){
-      const lv=Math.min(TOUR.blinds.length-1,Math.floor((T.handNo-1)/TOUR.handsPerLevel));
-      const [sb,bb]=TOUR.blinds[lv];
-      $("stageTag").textContent=`SNG Lv.${lv+1} · ${sb}/${bb} · ${seatedPlayers().length}人 · 第${T.handNo}手`;
+      const cfg=T.cfg||TOUR;
+      const lv=Math.min(cfg.blinds.length-1,Math.floor((T.handNo-1)/cfg.handsPerLevel));
+      const [sb,bb]=cfg.blinds[lv];
+      $("stageTag").textContent=`${T.vip?"VIP SNG":"SNG"} Lv.${lv+1} · ${sb}/${bb} · ${seatedPlayers().length}人 · 第${T.handNo}手`;
     } else {
-      $("stageTag").textContent="CASH · 10/20";
+      const [sb,bb]=cashBlinds();
+      $("stageTag").textContent=(vip?"VIP CASH":"CASH")+` · ${sb}/${bb}`;
     }
   }
 
@@ -392,13 +412,15 @@ const PokerModule = (()=>{
       const me=P.players[0];
       pnl=me.chips-P.startCoins;
       GameState.coins=Math.max(0,me.chips);
-      if(GameState.coins<BB) GameState.coins=200;
+      if(!vip && GameState.coins<BB) GameState.coins=200;
       gsSave(); syncCoinDisplays();
+      businessTick();
     }
 
     /* 锦标赛：淘汰判定与名次 */
     let tourResult=null;
     if(P.mode==="tournament"){
+      const cfg=T.cfg||TOUR;
       // 同步筹码回 T.players
       P.players.forEach(p=>{
         const tp=T.players.find(x=>x.id===p.id);
@@ -412,14 +434,16 @@ const PokerModule = (()=>{
         const elimIndex=T.eliminations.indexOf(0);
         const place=4-elimIndex;
         tourResult={place, over:true};
-        const prize=TOUR.prizes[place]||0;
+        const prize=cfg.prizes[place]||0;
         if(prize>0){ addCoins(prize); log("第"+place+"名 · 奖金 G"+prize); }
         T.finished=true;
+        businessTick();
       } else if(remaining.length===1){
         tourResult={place:1, over:true};
-        addCoins(TOUR.prizes[1]);
-        log("冠军! 奖金 G"+TOUR.prizes[1]);
+        addCoins(cfg.prizes[1]);
+        log("冠军! 奖金 G"+cfg.prizes[1]);
         T.finished=true;
+        businessTick();
       } else {
         tourResult={place:null, over:false};
       }
@@ -434,13 +458,14 @@ const PokerModule = (()=>{
     setTimeout(()=>{
       const titleEl=$("prTitle"), subEl=$("prSub");
       if(P.mode==="tournament"){
+        const cfg=T.cfg||TOUR;
         if(tourResult.over){
-          if(tourResult.place===1){ titleEl.textContent="🏆 CHAMPION"; }
+          if(tourResult.place===1){ titleEl.textContent="CHAMPION"; }
           else titleEl.textContent="第 "+tourResult.place+" 名";
-          const prize=TOUR.prizes[tourResult.place]||0;
+          const prize=cfg.prizes[tourResult.place]||0;
           subEl.textContent=tourResult.place===1
-            ? "锦标赛冠军 · 奖金 G"+prize
-            : "锦标赛出局 · "+(prize>0?"奖金 G"+prize:"无奖金");
+            ? (T.vip?"VIP ":"")+"锦标赛冠军 · 奖金 G"+prize.toLocaleString()
+            : "锦标赛出局 · "+(prize>0?"奖金 G"+prize.toLocaleString():"无奖金");
         } else {
           titleEl.textContent="HAND OVER";
           const remaining=T.players.filter(p=>!p.out).length;
@@ -476,9 +501,10 @@ const PokerModule = (()=>{
 
       const pnlEl=$("prPnl");
       if(P.mode==="tournament"){
+        const cfg=T.cfg||TOUR;
         if(tourResult.over){
-          const prize=TOUR.prizes[tourResult.place]||0;
-          pnlEl.textContent=(prize>0?"+":"-")+"G "+(prize>0?prize:TOUR.buyin);
+          const prize=cfg.prizes[tourResult.place]||0;
+          pnlEl.textContent=(prize>0?"+":"-")+"G "+(prize>0?prize.toLocaleString():cfg.buyin.toLocaleString());
           pnlEl.className="v "+(prize>0?"pos":"neg");
         } else {
           pnlEl.textContent="锦标赛进行中";
@@ -610,13 +636,20 @@ const PokerModule = (()=>{
 
   return {
     get tournament(){ return T; },
-    enter(){
+    enter(mode){
+      if(mode==="vip") vip=true;
+      else if(mode==="normal") vip=false;
+      // 回到一场未打完的 VIP 锦标赛时自动切回 VIP 模式
+      if(T&&!T.finished&&T.vip) vip=true;
       // 未完成手回滚（保护玩家筹码）
       if(T&&!T.finished&&P&&P.stage!=="showdown"&&T.savedChips){
         T.players.forEach(p=>{ p.chips=T.savedChips[p.id]; });
         T.savedChips=null;
       }
       P=null;
+      // 顶栏标题
+      const h=document.querySelector("#view-poker .brand h1");
+      if(h) h.textContent = vip ? "POKER VIP" : "POKER";
       $("pokerResultModal").classList.add("hidden");
       $("community").innerHTML="";
       $("potVal").textContent="0";
@@ -624,23 +657,33 @@ const PokerModule = (()=>{
       $("pokerLog").innerHTML="";
       // intro 文案按锦标赛状态
       if(T&&!T.finished){
-        const lv=Math.min(TOUR.blinds.length-1,Math.floor(T.handNo/TOUR.handsPerLevel));
+        const cfg=T.cfg||TOUR;
+        const lv=Math.min(cfg.blinds.length-1,Math.floor(T.handNo/cfg.handsPerLevel));
         const remaining=T.players.filter(p=>!p.out).length;
-        $("pokerIntroText").innerHTML=`锦标赛进行中 · 剩余 ${remaining} 人<br>下一手盲注 Lv.${lv+1}（${TOUR.blinds[lv][0]}/${TOUR.blinds[lv][1]}）`;
+        $("pokerIntroText").innerHTML=`${T.vip?"VIP ":""}锦标赛进行中 · 剩余 ${remaining} 人<br>下一手盲注 Lv.${lv+1}（${cfg.blinds[lv][0]}/${cfg.blinds[lv][1]}）`;
         $("btnDeal").style.display="none";
-        $("btnTournament").textContent=`继续 SNG · 第 ${T.handNo+1} 手`;
+        $("btnTournament").textContent=`继续 ${T.vip?"VIP SNG":"SNG"} · 第 ${T.handNo+1} 手`;
       } else {
         T=null;
-        $("pokerIntroText").innerHTML="现金桌：金币直接上桌，随时离场<br>锦标赛：G500 买入，4 人淘汰赛，冠军 G1500 / 亚军 G500";
-        $("btnDeal").style.display="block";
-        $("btnTournament").textContent="SNG · 锦标赛（报名 G500）";
+        if(vip){
+          $("pokerIntroText").innerHTML="VIP 现金桌：盲注 200/400，对手各带五万<br>VIP 锦标赛：G5,000 买入，冠军 G15,000 / 亚军 G5,000";
+          $("btnDeal").style.display="block";
+          $("btnDeal").textContent="VIP CASH · 现金桌（盲注 200/400）";
+          $("btnTournament").textContent="VIP SNG · 锦标赛（报名 G5,000）";
+        } else {
+          $("pokerIntroText").innerHTML="现金桌：金币直接上桌，随时离场<br>锦标赛：G500 买入，4 人淘汰赛，冠军 G1500 / 亚军 G500";
+          $("btnDeal").style.display="block";
+          $("btnDeal").textContent="CASH · 现金桌（盲注 10/20）";
+          $("btnTournament").textContent="SNG · 锦标赛（报名 G500）";
+        }
       }
+      const botChips=vip?50000:1000;
       [0,1,2,3].forEach(i=>{
         const seat=$("seat-"+i);
         seat.className="seat seat-"+i;
-        let chips="G 1000";
-        if(i===0) chips="G "+GameState.coins;
-        if(T&&!T.finished){ const tp=T.players[i]; chips=(tp.out?"OUT":"T$ "+tp.chips); }
+        let chips="G "+botChips;
+        if(i===0) chips="G "+GameState.coins.toLocaleString();
+        if(T&&!T.finished){ const tp=T.players[i]; chips=(tp.out?"OUT":"T$ "+tp.chips.toLocaleString()); }
         seat.innerHTML=`
           <div class="seat-cards"></div>
           <div class="seat-info">
@@ -648,7 +691,7 @@ const PokerModule = (()=>{
             <div class="seat-chips">${chips}</div>
           </div>`;
       });
-      $("stageTag").textContent="TEXAS HOLD'EM";
+      $("stageTag").textContent=vip?"TEXAS HOLD'EM VIP · 200/400":"TEXAS HOLD'EM · 10/20";
       $("pokerIntro").style.display="flex";
       renderControls();
     }

@@ -319,6 +319,7 @@ const RaceModule = (()=>{
       addCoins(200);
       setTimeout(()=>toast("BUST! +200"), 800);
     }
+    businessTick();
     GameState.raceNo += 1;
     gsSave(); renderTop();
 

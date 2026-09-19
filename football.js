@@ -438,6 +438,7 @@ const FootballModule = (()=>{
     f._justPlayed=true;
     if(ret>0) addCoins(ret);
     if(GameState.coins===0){ addCoins(200); toast("救助金 +G200"); }
+    businessTick();
     gsSave();
     renderEnd(f,ret);
   }

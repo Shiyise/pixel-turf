@@ -539,6 +539,88 @@
   .fb-endrow{display:flex;gap:8px;}
   .fb-endrow .fb-confirm{flex:1;}
 
+  /* ========== 地图：VIP 厅卡片 / 股东角标 ========== */
+  .place{position:relative;}
+  .place.vip .art{background:linear-gradient(180deg,#1d1408 0%,#3d2a0a 100%);}
+  .place.vip .meta h2{color:var(--yellow);}
+  .place.vip.locked{filter:grayscale(.85) brightness(.75);}
+  .vip-art{font-family:"Press Start 2P",monospace;font-size:34px;color:var(--yellow);
+    text-shadow:3px 3px 0 #000,0 0 14px rgba(255,216,0,.5);}
+  .owned-tag{
+    position:absolute;top:8px;right:8px;z-index:2;
+    background:var(--yellow);color:#000;border:2px solid #000;
+    font-family:"Press Start 2P",monospace;font-size:8px;padding:3px 5px;
+  }
+
+  /* ========== 地图：地产区 ========== */
+  .property-block{max-width:720px;margin:26px auto 0;}
+  .property-head{
+    display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px;
+  }
+  .property-head h3{
+    font-family:"Press Start 2P",monospace;font-size:12px;color:var(--yellow);
+    text-shadow:2px 2px 0 #000;
+  }
+  .property-head .prop-income{font-size:10px;color:var(--muted);text-align:right;line-height:1.5;}
+  .prop-list{display:flex;flex-direction:column;gap:8px;}
+  .prop-row{
+    display:flex;align-items:center;gap:10px;
+    background:var(--panel);border:3px solid #000;box-shadow:3px 3px 0 #000;padding:8px 10px;
+  }
+  .prop-row.owned{background:#243a24;}
+  .prop-icon{
+    width:38px;height:38px;flex-shrink:0;background:var(--panel-2);border:3px solid #000;
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;font-weight:700;color:var(--yellow);
+  }
+  .prop-row.owned .prop-icon{background:var(--green);color:#000;}
+  .prop-info{flex:1;min-width:0;}
+  .prop-name{font-size:13px;font-weight:700;}
+  .prop-badge{
+    font-size:8px;background:var(--green);color:#000;border:1px solid #000;
+    padding:1px 4px;margin-left:4px;vertical-align:1px;
+  }
+  .prop-desc{font-size:10px;color:var(--muted);margin-top:2px;}
+  .prop-btn{
+    flex-shrink:0;background:var(--yellow);color:#000;border:3px solid #000;
+    height:40px;padding:0 14px;cursor:pointer;font-family:"Press Start 2P",monospace;
+    font-size:9px;box-shadow:2px 2px 0 #000;
+  }
+  .prop-btn.confirm{background:var(--red);color:#fff;}
+  .prop-btn:disabled{background:var(--panel-2);color:var(--muted);box-shadow:none;cursor:default;}
+  .prop-btn:active:not(:disabled){transform:translate(2px,2px);box-shadow:0 0 0 #000;}
+
+  /* ========== VIP 厅视图 ========== */
+  #view-vip{
+    overflow-y:auto;
+    background:
+      radial-gradient(circle at 50% 20%, rgba(255,216,0,.1), transparent 55%),
+      linear-gradient(180deg,#171126 0%,#0d0a16 100%);
+  }
+  .vip-hall{max-width:720px;margin:0 auto;padding:22px 18px 40px;}
+  .vip-title{text-align:center;margin-bottom:8px;}
+  .vip-title h1{
+    font-family:"Press Start 2P",monospace;font-size:22px;color:var(--yellow);
+    text-shadow:3px 3px 0 #000,0 0 18px rgba(255,216,0,.45);
+  }
+  .vip-title p{font-size:11px;color:var(--muted);margin-top:10px;letter-spacing:1px;line-height:1.7;}
+  .vip-tables{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-top:26px;}
+  .vip-table{
+    text-align:left;cursor:pointer;padding:0;overflow:hidden;
+    background:linear-gradient(180deg,#2a2140,#1b1530);
+    border:4px solid var(--yellow);box-shadow:6px 6px 0 #000;
+  }
+  .vip-table:active{transform:translate(3px,3px);box-shadow:3px 3px 0 #000;}
+  .vip-table .vt-art{height:110px;display:flex;align-items:center;justify-content:center;
+    font-family:"Press Start 2P",monospace;font-size:30px;color:var(--yellow);text-shadow:3px 3px 0 #000;}
+  .vip-table .vt-meta{padding:14px 16px;background:rgba(0,0,0,.35);border-top:3px solid #000;}
+  .vip-table .vt-meta h2{font-family:"Press Start 2P",monospace;font-size:12px;color:var(--yellow);margin-bottom:8px;}
+  .vip-table .vt-meta p{font-size:11px;color:var(--text);line-height:1.8;}
+  .vip-note{
+    margin-top:24px;text-align:center;font-size:10px;color:var(--muted);line-height:1.8;
+    border:2px dashed var(--panel-2);padding:12px;
+  }
+
   .toast{
     position:fixed;left:50%;bottom:90px;transform:translateX(-50%);
     background:var(--bg-2);border:3px solid var(--yellow);
@@ -626,10 +708,66 @@
         <p>五大联赛 20 支豪门，11 人制对决，每轮 4 场。胜平负、大小球 2.5、精确比分三种盘口，看直播收米。</p>
       </div>
     </button>
+    <button class="place vip locked" id="goVip">
+      <div class="art">
+        <div class="vip-art">VIP</div>
+      </div>
+      <div class="meta">
+        <h2>VIP LOUNGE · 贵宾厅</h2>
+        <p class="vip-lock-text">锁定 · 身家达到 G50,000 解锁</p>
+      </div>
+    </button>
   </div>
+
+  <div class="property-block">
+    <div class="property-head">
+      <h3>PROPERTY · 我的生意</h3>
+      <div class="prop-income" id="propIncome">还没有产业 · 赢钱后买下生意，每局自动分红</div>
+    </div>
+    <div class="prop-list" id="propList"></div>
+  </div>
+
   <div class="map-foot">
     <div>持有金币：<span id="mapCoins" style="color:var(--yellow);font-family:'Press Start 2P',monospace;">0</span></div>
-    <div style="margin-top:8px;">四个场所金币互通 · 进度自动保存在浏览器</div>
+    <div style="margin-top:8px;">场所金币互通 · 生意每局分红 · 进度自动保存在浏览器</div>
+  </div>
+</div>
+
+<!-- ================= VIP 贵宾厅 ================= -->
+<div class="view hidden" id="view-vip">
+  <header class="topbar" style="background:#241d08;">
+    <div class="brand">
+      <button class="btn-icon" id="vipBack">← MAP</button>
+      <h1 style="margin-left:6px;color:var(--yellow);text-shadow:2px 2px 0 #000;">VIP</h1>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="lbl">金币</span><span class="val gold" id="mapCoinsVip">0</span></div>
+    </div>
+  </header>
+  <div class="vip-hall">
+    <div class="vip-title">
+      <h1>VIP LOUNGE</h1>
+      <p>只招待身家五位数以上的客人 · 这里的赌局以一当百</p>
+    </div>
+    <div class="vip-tables">
+      <button class="vip-table" id="goVipBlackjack">
+        <div class="vt-art">21</div>
+        <div class="vt-meta">
+          <h2>VIP 黑杰克</h2>
+          <p>筹码 5,000 / 10,000 / 50,000 / 100,000<br>黑杰克 3:2，照样可以 ALL-IN 押身家</p>
+        </div>
+      </button>
+      <button class="vip-table" id="goVipPoker">
+        <div class="vt-art">♠ ♥</div>
+        <div class="vt-meta">
+          <h2>VIP 德州扑克</h2>
+          <p>现金桌盲注 200/400，对手带五万上桌<br>高注 SNG：G5,000 报名，冠军 G15,000</p>
+        </div>
+      </button>
+    </div>
+    <div class="vip-note">
+      高注桌与普通厅共用同一个钱包，赢了回地图买产业，输光了回普通桌领救助金东山再起。
+    </div>
   </div>
 </div>
 
@@ -881,10 +1019,10 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="shared.js?v=9"></script>
-<script src="race.js?v=9"></script>
-<script src="poker.js?v=9"></script>
-<script src="blackjack.js?v=9"></script>
-<script src="football.js?v=9"></script>
+<script src="shared.js?v=10"></script>
+<script src="race.js?v=10"></script>
+<script src="poker.js?v=10"></script>
+<script src="blackjack.js?v=10"></script>
+<script src="football.js?v=10"></script>
 </body>
 </html>

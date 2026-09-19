@@ -10,6 +10,10 @@ const BJ_RANK = {11:"J",12:"Q",13:"K",14:"A"};
 const BlackjackModule = (()=>{
   let shoe=[];
   let bet=0, player=[], dealer=[], phase="bet", result=null, busy=false;
+  let vip=false;
+  const CHIPS_NORMAL=[100,500,1000,5000];
+  const CHIPS_VIP=[5000,10000,50000,100000];
+  const chips=()=>vip?CHIPS_VIP:CHIPS_NORMAL;
 
   /* ---------- 牌靴（4 副） ---------- */
   function buildShoe(){
@@ -40,8 +44,13 @@ const BlackjackModule = (()=>{
   const isBJ = h => h.length===2 && score(h)===21;
 
   /* ---------- 流程 ---------- */
-  function enter(){
+  function enter(mode){
+    if(mode==="vip") vip=true;
+    else if(mode==="normal") vip=false;
     bet=0; player=[]; dealer=[]; phase="bet"; result=null; busy=false;
+    // 顶栏标题区分桌台
+    const h=document.querySelector("#view-blackjack .brand h1");
+    if(h) h.textContent = vip ? "21 VIP" : "21";
     render();
   }
 
@@ -145,6 +154,7 @@ const BlackjackModule = (()=>{
       addCoins(200);
       toast("21点救助金 +G200");
     }
+    businessTick();
     render();
   }
 
@@ -178,9 +188,10 @@ const BlackjackModule = (()=>{
     else { banner.textContent=""; banner.className="bj-banner"; }
 
     if(phase==="bet"){
-      $("bjBetInfo").innerHTML = bet>0
-        ? `本局下注 <span style="color:var(--yellow)">G${bet}</span> · 黑杰克可赢 G${Math.floor(bet*1.5)}`
-        : "选择筹码下注 · 黑杰克赔 3:2，和局退本";
+      $("bjBetInfo").innerHTML = (vip?'<span style="color:var(--yellow)">VIP 高注桌 · </span>':'')
+        + (bet>0
+          ? `本局下注 <span style="color:var(--yellow)">G${bet.toLocaleString()}</span> · 黑杰克可赢 G${Math.floor(bet*1.5).toLocaleString()}`
+          : "选择筹码下注 · 黑杰克赔 3:2，和局退本");
     } else {
       $("bjBetInfo").innerHTML = `本局下注 <span style="color:var(--yellow)">G${bet}</span>`
         + (result?` · 返还 <span style="color:${result.ret>0?'var(--green)':'var(--muted)'}">G${result.ret||0}</span>`:"");
@@ -191,16 +202,14 @@ const BlackjackModule = (()=>{
   function renderControls(){
     const box=$("bjControls");
     if(phase==="bet"){
+      const chipBtns=chips().map(c=>`<button class="chip" data-bj="${c}">${c.toLocaleString()}</button>`).join("");
       box.innerHTML=`
         <div class="bj-chiprow">
-          <button class="chip" data-bj="100">100</button>
-          <button class="chip" data-bj="500">500</button>
-          <button class="chip" data-bj="1000">1000</button>
-          <button class="chip" data-bj="5000">5000</button>
+          ${chipBtns}
           <button class="chip allin" data-bj="all">ALL-IN</button>
           <button class="chip clear" data-bj="clear">CLEAR</button>
         </div>
-        <button class="bj-deal" id="bjDeal" ${bet<=0?"disabled":""}>DEAL · 发牌（G${bet}）</button>`;
+        <button class="bj-deal" id="bjDeal" ${bet<=0?"disabled":""}>DEAL · 发牌（G${bet.toLocaleString()}）</button>`;
       box.querySelectorAll("[data-bj]").forEach(b=>{
         b.onclick=()=>{
           const v=b.dataset.bj;
@@ -226,7 +235,7 @@ const BlackjackModule = (()=>{
       box.innerHTML=`
         <div class="bj-actionrow">
           <button class="pbtn pbtn-stand" id="bjNewBet" style="flex:0 0 34%;">NEW BET<br>改注</button>
-          <button class="bj-deal" id="bjRebet" ${canRebet?"":"disabled"}>REBET · 同注再来（G${bet}）</button>
+          <button class="bj-deal" id="bjRebet" ${canRebet?"":"disabled"}>REBET · 同注再来（G${bet.toLocaleString()}）</button>
         </div>`;
       $("bjNewBet").onclick=enter;
       $("bjRebet").onclick=rebet;
