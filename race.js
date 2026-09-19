@@ -394,10 +394,11 @@ const RaceModule = (()=>{
             <button class="train-btn" data-idx="${idx}" data-attr="stamina">耐 G50</button>
             <button class="train-btn" data-idx="${idx}" data-attr="burst">爆 G50</button>
             <button class="train-btn" data-idx="${idx}" data-attr="consistency">稳 G50</button>
+            <button class="train-btn sell-btn" data-sell="${idx}">卖 G${sellHorsePrice(s)}</button>
           </div>`;
         list.appendChild(item);
       });
-      list.querySelectorAll(".train-btn").forEach(btn=>{
+      list.querySelectorAll(".train-btn:not(.sell-btn)").forEach(btn=>{
         btn.onclick=()=>{
           const idx=parseInt(btn.dataset.idx), attr=btn.dataset.attr;
           const s=GameState.stable[idx];
@@ -413,9 +414,45 @@ const RaceModule = (()=>{
           } else toast("训练失败…");
         };
       });
+      list.querySelectorAll(".sell-btn").forEach(btn=>{
+        btn.onclick=()=>{
+          const idx=parseInt(btn.dataset.sell);
+          const s=GameState.stable[idx];
+          if(!btn.classList.contains("confirming")){
+            // 两段式确认：第一次进入待确认，再点一次才真正出售
+            list.querySelectorAll(".sell-btn.confirming").forEach(b=>{
+              const oi=parseInt(b.dataset.sell);
+              b.classList.remove("confirming");
+              if(GameState.stable[oi]) b.textContent="卖 G"+sellHorsePrice(GameState.stable[oi]);
+            });
+            btn.classList.add("confirming");
+            btn.textContent="确认卖?";
+            return;
+          }
+          const price=sellHorsePrice(s);
+          const name=HORSE_POOL[s.poolId].name;
+          GameState.stable.splice(idx,1);
+          addCoins(price);
+          state.myHorseSlot=-1;
+          renderMyPick();
+          gsSave();
+          toast("出售 "+name+" +G"+price);
+          openStable();
+        };
+      });
     }
     $("stableCount").textContent=GameState.stable.length+" / "+MAX_STABLE;
     $("stableModal").classList.remove("hidden");
+  }
+
+  /* 卖马估价：签约价 6 折 + 训练投入半价 + 每级 G30 */
+  function sellHorsePrice(s){
+    const rarity=HORSE_POOL[s.poolId].rarity;
+    const base=Math.floor((SIGN_PRICE[rarity]||300)*0.6);
+    const trainTimes=Object.values(s.trained||{}).reduce((a,b)=>a+(b||0)/TRAIN_GAIN,0);
+    const trainVal=Math.floor(trainTimes*TRAIN_COST*0.5);
+    const lvVal=(s.level-1)*30;
+    return base+trainVal+lvVal;
   }
 
   /* 配种 */
