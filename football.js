@@ -1,21 +1,34 @@
 /* ===================== 足球赌球模块 =====================
- * 12 支虚构像素球队，每轮 4 场比赛。
+ * 20 支五大联赛球队（每联赛 4 支），每轮抽 8 队踢 4 场。
  * 盘口：胜平负（1X2）、大小球 2.5、精确比分；赔率由 Poisson 模型给出。
- * 下注后播放像素比赛动画，比分在开球前按概率采样，动画只还原结果。
+ * 下注后播放 11 人制像素比赛动画，比分在开球前按概率采样，动画只还原结果。
  * ======================================================= */
 const TEAMS = [
-  {id:0,  name:"霓虹联",   short:"NEO", en:"NEON UNITED",  color:"#ff004d", rating:1.14},
-  {id:1,  name:"皇家码头", short:"ROY", en:"ROYAL DOCK",   color:"#b26bff", rating:1.12},
-  {id:2,  name:"像素城",   short:"PXC", en:"PIXEL CITY",   color:"#ffd800", rating:1.10},
-  {id:3,  name:"红星",     short:"RED", en:"RED STAR",     color:"#e84040", rating:1.05},
-  {id:4,  name:"海湾竞技", short:"BAY", en:"BAY ATHLETIC", color:"#38b0e8", rating:1.03},
-  {id:5,  name:"北方狼",   short:"WLF", en:"NORTH WOLVES", color:"#9fb2c8", rating:0.99},
-  {id:6,  name:"太阳谷",   short:"SUN", en:"SUN VALLEY",   color:"#ff9a2e", rating:0.97},
-  {id:7,  name:"铁厂",     short:"IRN", en:"IRONWORKS",    color:"#c8704a", rating:0.95},
-  {id:8,  name:"翡翠港",   short:"EME", en:"EMERALD PORT", color:"#2ed878", rating:0.92},
-  {id:9,  name:"午夜",     short:"MID", en:"MIDNIGHT FC",  color:"#7a6ae8", rating:0.90},
-  {id:10, name:"雷霆",     short:"THD", en:"THUNDER SC",   color:"#ffe14a", rating:0.86},
-  {id:11, name:"国王十字", short:"KGX", en:"KINGS CROSS",  color:"#e84ae8", rating:0.83},
+  // 英超
+  {id:0,  name:"曼城",       short:"MCI", en:"MAN CITY",      color:"#6cabdd", rating:1.16, lg:"英超"},
+  {id:1,  name:"阿森纳",     short:"ARS", en:"ARSENAL",       color:"#ef0107", rating:1.12, lg:"英超"},
+  {id:2,  name:"利物浦",     short:"LIV", en:"LIVERPOOL",     color:"#c8102e", rating:1.12, lg:"英超"},
+  {id:3,  name:"切尔西",     short:"CHE", en:"CHELSEA",       color:"#034694", rating:1.07, lg:"英超"},
+  // 西甲
+  {id:4,  name:"皇家马德里", short:"RMA", en:"REAL MADRID",   color:"#febe10", rating:1.15, lg:"西甲"},
+  {id:5,  name:"巴塞罗那",   short:"BAR", en:"BARCELONA",     color:"#a50044", rating:1.10, lg:"西甲"},
+  {id:6,  name:"马德里竞技", short:"ATM", en:"ATLETICO",      color:"#272e61", rating:1.05, lg:"西甲"},
+  {id:7,  name:"比利亚雷亚尔",short:"VIL",en:"VILLARREAL",    color:"#f5d547", rating:0.95, lg:"西甲"},
+  // 意甲
+  {id:8,  name:"国际米兰",   short:"INT", en:"INTER MILAN",   color:"#0068a8", rating:1.10, lg:"意甲"},
+  {id:9,  name:"那不勒斯",   short:"NAP", en:"NAPOLI",        color:"#12a0d7", rating:1.03, lg:"意甲"},
+  {id:10, name:"AC米兰",     short:"MIL", en:"AC MILAN",      color:"#fb090b", rating:1.02, lg:"意甲"},
+  {id:11, name:"尤文图斯",   short:"JUV", en:"JUVENTUS",      color:"#e8e8e8", rating:1.00, lg:"意甲"},
+  // 德甲
+  {id:12, name:"拜仁慕尼黑", short:"BAY", en:"BAYERN",        color:"#dc052d", rating:1.13, lg:"德甲"},
+  {id:13, name:"多特蒙德",   short:"DOR", en:"DORTMUND",      color:"#fde100", rating:1.05, lg:"德甲"},
+  {id:14, name:"莱比锡",     short:"RBL", en:"LEIPZIG",       color:"#dd0741", rating:0.99, lg:"德甲"},
+  {id:15, name:"门兴",       short:"BMG", en:"GLADBACH",      color:"#00a651", rating:0.92, lg:"德甲"},
+  // 法甲
+  {id:16, name:"巴黎圣日耳曼",short:"PSG",en:"PARIS SG",      color:"#004170", rating:1.14, lg:"法甲"},
+  {id:17, name:"马赛",       short:"MAR", en:"MARSEILLE",     color:"#9fd8ff", rating:0.97, lg:"法甲"},
+  {id:18, name:"摩纳哥",     short:"MON", en:"MONACO",        color:"#e01e13", rating:0.94, lg:"法甲"},
+  {id:19, name:"里昂",       short:"LYO", en:"LYON",          color:"#1e3a8a", rating:0.93, lg:"法甲"},
 ];
 const CS_PICKS = ["1-0","2-0","2-1","3-1","1-1","2-2","0-0","0-1","1-2","0-2"];
 const FB_CHIPS = [10,50,100,500];
@@ -156,9 +169,9 @@ const FootballModule = (()=>{
         const ret=settleBet(f);
         card.innerHTML=`
           <div class="fx-row">
-            <div class="fx-team"><span class="fx-dot" style="background:${f.home.color}"></span><b>${f.home.name}</b></div>
+            <div class="fx-team"><span class="fx-dot" style="background:${f.home.color}"></span><span class="fx-lg">${f.home.lg}</span><b>${f.home.name}</b></div>
             <div class="fx-final">${f.score[0]} - ${f.score[1]}</div>
-            <div class="fx-team away"><b>${f.away.name}</b><span class="fx-dot" style="background:${f.away.color}"></span></div>
+            <div class="fx-team away"><b>${f.away.name}</b><span class="fx-lg">${f.away.lg}</span><span class="fx-dot" style="background:${f.away.color}"></span></div>
           </div>
           <div class="fx-result ${ret>0?"win":"lose"}">${
             f.bet ? (ret>0?("投注 "+f.bet.label+" 命中 +G"+(ret-f.bet.amount)) : ("投注 "+f.bet.label+" 未中 -G"+f.bet.amount))
@@ -172,9 +185,9 @@ const FootballModule = (()=>{
         });
         card.innerHTML=`
           <div class="fx-row">
-            <div class="fx-team"><span class="fx-dot" style="background:${f.home.color}"></span><b>${f.home.name}</b><small>${f.home.rating.toFixed(2)}</small></div>
+            <div class="fx-team"><span class="fx-dot" style="background:${f.home.color}"></span><span class="fx-lg">${f.home.lg}</span><b>${f.home.name}</b><small>${f.home.rating.toFixed(2)}</small></div>
             <div class="fx-vs">VS</div>
-            <div class="fx-team away"><small>${f.away.rating.toFixed(2)}</small><b>${f.away.name}</b><span class="fx-dot" style="background:${f.away.color}"></span></div>
+            <div class="fx-team away"><small>${f.away.rating.toFixed(2)}</small><b>${f.away.name}</b><span class="fx-lg">${f.away.lg}</span><span class="fx-dot" style="background:${f.away.color}"></span></div>
           </div>
           <div class="fx-odds-row">
             <button class="fx-odd${sel("1x2","h")}" data-k="${f.id}:1x2:h">主胜<b>@${o.h}</b></button>
@@ -274,15 +287,17 @@ const FootballModule = (()=>{
   }
   function px(x,y,w,h,c){ cx.fillStyle=c; cx.fillRect(Math.round(x),Math.round(y),w,h); }
 
+  /* 11 人制 4-4-2：GK + 后卫线 4 + 中场线 4 + 前锋 2 */
   const FORM=[
-    {x:0.06,y:0.50},
-    {x:0.20,y:0.22},{x:0.20,y:0.78},
-    {x:0.38,y:0.38},{x:0.38,y:0.62},
+    {x:0.06,y:0.50,gk:true},
+    {x:0.20,y:0.13},{x:0.20,y:0.38},{x:0.20,y:0.62},{x:0.20,y:0.87},
+    {x:0.38,y:0.16},{x:0.38,y:0.39},{x:0.38,y:0.61},{x:0.38,y:0.84},
+    {x:0.56,y:0.34},{x:0.56,y:0.66},
   ];
   function makePlayers(side){
     return FORM.map(p=>{
       const bx=side==="h"?p.x:1-p.x;
-      return {bx, by:p.y, x:bx, y:p.y, gk:p.x===0.06};
+      return {bx, by:p.y, x:bx, y:p.y, gk:!!p.gk};
     });
   }
 
@@ -303,6 +318,7 @@ const FootballModule = (()=>{
     };
     pickTarget();
     stopRaf();
+    draw(performance.now(),0); // 立即绘制开场站位首帧
     raf=setTimeout(loop, FRAME_MS);
   }
   function stopAnim(){ stopRaf(); anim=null; }
@@ -389,14 +405,14 @@ const FootballModule = (()=>{
       players.forEach((p,i)=>{
         let tx,ty;
         if(anim.mode==="attack"){
-          tx=anim.ball.x; ty=anim.ball.y+(i-2)*0.06;
+          tx=anim.ball.x; ty=anim.ball.y+(i-5)*0.045;
           if(side!==anim.attacker){ tx=p.bx*0.5+0.25; ty=p.by; }
         } else {
-          const pull=side===holderSide?0.34:0.16;
+          const pull=side===holderSide?0.22:0.1;
           tx=p.bx+(anim.ball.x-p.bx)*pull;
-          ty=p.by+(anim.ball.y-p.by)*(side===holderSide?0.22:0.3);
+          ty=p.by+(anim.ball.y-p.by)*(side===holderSide?0.15:0.2);
         }
-        if(anim.mode==="celebrate"){ tx=anim.ball.x+(i-2)*0.03; ty=anim.ball.y+(i%2?0.05:-0.05); }
+        if(anim.mode==="celebrate"){ tx=anim.ball.x+(i-5)*0.022; ty=anim.ball.y+(i%2?0.04:-0.04); }
         p.x+=(tx-p.x)*0.08 + Math.sin(now/280+i*1.7+ (side==="h"?0:1))*0.0015;
         p.y+=(ty-p.y)*0.08 + Math.cos(now/330+i*1.3)*0.0015;
       });
@@ -431,15 +447,18 @@ const FootballModule = (()=>{
     const f=anim.f;
     drawPitchBg();
     const X=x=>6+x*(W-12), Y=y=>8+y*(H-16);
-    const drawTeam=(players,team,flip)=>{
+    const drawTeam=(players,team,away)=>{
       players.forEach(p=>{
         const x=X(p.x), y=Y(p.y);
-        px(x-3,y-2,6,5,p.gk?"#ffd800":team.color);
+        const kit=p.gk?"#ffd800":team.color;
+        // 主队黑描边、客队白描边，保证同色对阵也能分清
+        px(x-4,y-3,8,7,away?"#f4f4f4":"#000");
+        px(x-3,y-2,6,5,kit);
         px(x-2,y-6,4,3,"#e8b088");
         px(x-3,y-2,6,1,"rgba(0,0,0,.25)");
       });
     };
-    drawTeam(anim.ap,f.away,false);
+    drawTeam(anim.ap,f.away,true);
     drawTeam(anim.hp,f.home,false);
     /* 球 */
     const bx=X(anim.ball.x), by=Y(anim.ball.y);
