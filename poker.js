@@ -109,8 +109,8 @@ const PokerModule = (()=>{
   function canActPlayers(){ return P.players.filter(p=>!p.folded&&!p.allin&&!p.out); }
   function currentBlinds(){
     if(!T) return [SB,BB];
-    const lv=Math.min(T.blinds.length-1, Math.floor((T.handNo-1)/TOUR.handsPerLevel));
-    return T.blinds[lv];
+    const lv=Math.min(TOUR.blinds.length-1, Math.floor((T.handNo-1)/TOUR.handsPerLevel));
+    return TOUR.blinds[lv];
   }
 
   /* ---------- 开局 ---------- */
@@ -323,16 +323,30 @@ const PokerModule = (()=>{
   }
 
   /* ---------- 边池 ---------- */
+  // 退还弃牌者超过“未弃牌者最高投入”的部分（无人跟注的注码原路退回）
+  function refundFoldedExcess(){
+    const alive=P.players.filter(p=>!p.folded&&!p.out);
+    const maxAliveBet=Math.max(0,...alive.map(p=>p.totalBet));
+    P.players.filter(p=>p.folded).forEach(p=>{
+      if(p.totalBet>maxAliveBet){
+        const refund=p.totalBet-maxAliveBet;
+        p.chips+=refund;
+        p.totalBet=maxAliveBet;
+        P.pot-=refund;
+      }
+    });
+  }
   function buildPots(){
-    const contributors=P.players.filter(p=>p.totalBet>0)
-      .sort((a,b)=>a.totalBet-b.totalBet);
-    const levels=[...new Set(contributors.map(p=>p.totalBet))].sort((a,b)=>a-b);
+    refundFoldedExcess();
+    const alive=P.players.filter(p=>!p.folded&&!p.out);
+    const levels=[...new Set(alive.map(p=>p.totalBet).filter(x=>x>0))]
+      .sort((a,b)=>a-b);
     const pots=[];
     let prev=0;
     for(const lvl of levels){
       let amount=0;
-      contributors.forEach(p=>{ amount+=Math.max(0,Math.min(p.totalBet,lvl)-prev); });
-      const eligible=P.players.filter(p=>!p.folded&&!p.out&&p.totalBet>=lvl);
+      P.players.forEach(p=>{ amount+=Math.max(0,Math.min(p.totalBet,lvl)-prev); });
+      const eligible=alive.filter(p=>p.totalBet>prev);
       if(amount>0) pots.push({amount,eligible});
       prev=lvl;
     }
@@ -363,9 +377,10 @@ const PokerModule = (()=>{
 
   function endHand(){
     P.stage="showdown"; setStageTag();
-    // 弃牌收场：唯一存活者通吃（任意街）
+    // 弃牌收场：唯一存活者通吃（任意街），先退还无人跟注的超额注码
     const alive=alivePlayers();
     if(alive.length===1){
+      refundFoldedExcess();
       alive[0].chips+=P.pot;
       alive[0].isWinner=true;
       log(alive[0].name+" 赢得 "+P.pot+"（其他人弃牌）");
@@ -450,11 +465,12 @@ const PokerModule = (()=>{
                      : cardBackHTML(true)+cardBackHTML(true))
           : '<span style="font-size:10px;color:var(--red);">OUT</span>';
         const hn=p.evaluated?HAND_NAMES[p.evaluated.cat]:"";
+        const cur=P.mode==="tournament"?"T$":"G";
         row.innerHTML=`
           <div style="min-width:58px;font-size:11px;font-weight:700;">${p.name}${p.isWinner?' ★':''}</div>
           <div style="display:flex;gap:3px;">${cards}</div>
           <div style="flex:1;text-align:right;font-size:11px;color:var(--yellow);">${hn}</div>
-          <div style="font-size:10px;min-width:52px;text-align:right;">G ${p.chips}</div>`;
+          <div style="font-size:10px;min-width:52px;text-align:right;">${cur} ${p.chips}</div>`;
         box.appendChild(row);
       });
 

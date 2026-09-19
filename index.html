@@ -415,7 +415,11 @@
     .playing-card .st{font-size:12px;}
     .community{gap:4px;}
     .pbtn{font-size:9px;}
-    .seat-2,.seat-3{display:none;} /* 窄屏只保留上下两个 AI */
+    /* 窄屏：三名对手全部保留，排列在牌桌远端左/中/右 */
+    .seat-1{top:6px;}
+    .seat-2{top:6px;left:4px;transform:none;}
+    .seat-3{top:6px;right:4px;transform:none;}
+    .seat-0{bottom:6px;}
   }
 </style>
 </head>
@@ -445,7 +449,7 @@
       </div>
       <div class="meta">
         <h2>POKER · 扑克室</h2>
-        <p>德州扑克，你对战 3 个 AI。小盲 10 / 大盲 20，赢来的金币带回赛马场。</p>
+        <p>德州扑克，你对战 3 个 AI。现金桌随到随玩，或交 G500 报名 SNG 锦标赛争冠军 G1500。</p>
       </div>
     </button>
   </div>
@@ -640,8 +644,8 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="shared.js"></script>
-<script src="race.js"></script>
-<script src="poker.js"></script>
+<script src="shared.js?v=3"></script>
+<script src="race.js?v=3"></script>
+<script src="poker.js?v=3"></script>
 </body>
 </html>
