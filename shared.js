@@ -55,7 +55,7 @@ function addCoins(n){
 }
 function syncCoinDisplays(){
   const v = GameState.coins;
-  ["mapCoins","coinVal","pokerCoinVal","bjCoinVal"].forEach(id=>{
+  ["mapCoins","coinVal","pokerCoinVal","bjCoinVal","fbCoinVal"].forEach(id=>{
     const el = $(id);
     if(el) el.textContent = v;
   });
@@ -63,7 +63,7 @@ function syncCoinDisplays(){
 
 /* ===================== 视图切换 ===================== */
 function showView(name){
-  ["map","race","poker","blackjack"].forEach(v=>{
+  ["map","race","poker","blackjack","football"].forEach(v=>{
     $("view-"+v).classList.toggle("hidden", v!==name);
   });
   syncCoinDisplays();
@@ -78,6 +78,9 @@ function showView(name){
   }
   if(name === "blackjack" && typeof BlackjackModule !== "undefined"){
     BlackjackModule.enter();
+  }
+  if(name === "football" && typeof FootballModule !== "undefined"){
+    FootballModule.enter();
   }
 }
 
@@ -146,6 +149,8 @@ showView("map");
 $("goRace").onclick = ()=>showView("race");
 $("goPoker").onclick = ()=>showView("poker");
 $("goBlackjack").onclick = ()=>showView("blackjack");
+$("goFootball").onclick = ()=>showView("football");
 $("raceBack").onclick = ()=>showView("map");
 $("pokerBack").onclick = ()=>showView("map");
 $("bjBack").onclick = ()=>showView("map");
+$("fbBack").onclick = ()=>showView("map");

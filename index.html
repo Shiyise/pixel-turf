@@ -454,6 +454,87 @@
   .bj-deal:disabled{opacity:.4;cursor:not-allowed;}
   .bj-deal:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000;}
 
+  /* ========== 足球赌球 ========== */
+  .place.fb .art{background:linear-gradient(180deg,#0a2412 0%,#1a5c2a 100%);}
+  .place.fb .meta h2{color:#2ed878;}
+  .art-fb{display:flex;flex-direction:column;align-items:center;gap:7px;}
+  .art-ball{
+    width:44px;height:44px;border-radius:50%;background:#f4f4f4;border:3px solid #000;position:relative;
+    box-shadow:inset -5px -5px 0 rgba(0,0,0,.18);
+  }
+  .art-ball::before{
+    content:"";position:absolute;left:50%;top:50%;width:13px;height:13px;background:#111;
+    transform:translate(-50%,-50%);
+  }
+  .art-ball::after{
+    content:"";position:absolute;inset:0;border-radius:50%;
+    background:
+      radial-gradient(circle at 16% 22%,#111 3.5px,transparent 4.5px),
+      radial-gradient(circle at 84% 22%,#111 3.5px,transparent 4.5px),
+      radial-gradient(circle at 18% 82%,#111 3.5px,transparent 4.5px),
+      radial-gradient(circle at 82% 82%,#111 3.5px,transparent 4.5px);
+  }
+  .art-goal{font-family:"Press Start 2P",monospace;font-size:15px;color:#2ed878;text-shadow:2px 2px 0 #000;}
+
+  #view-football .topbar{background:#0d2f16;}
+  .fb-pitch-wrap{position:relative;background:#0a1f10;border-bottom:3px solid #000;}
+  #fbPitch{display:block;width:100%;image-rendering:pixelated;}
+  .fb-overlay{position:absolute;inset:0;pointer-events:none;display:flex;flex-direction:column;align-items:center;}
+  .fb-scoreboard{
+    margin-top:8px;background:rgba(0,0,0,.72);border:2px solid #000;color:#fff;
+    font-family:"Press Start 2P",monospace;font-size:11px;padding:6px 12px;letter-spacing:1px;
+  }
+  .fb-banner{margin:auto auto 12px;font-family:"Press Start 2P",monospace;font-size:20px;text-shadow:3px 3px 0 #000;min-height:26px;text-align:center;padding:0 10px;}
+  .fb-banner .goal{color:#ffe14a;}
+  .fb-banner .win{color:#2ed878;font-size:12px;}
+  .fb-banner .lose{color:var(--red);font-size:12px;}
+
+  .fb-head{padding:8px 12px;display:flex;justify-content:space-between;align-items:center;}
+  .fb-head h2{font-family:"Press Start 2P",monospace;font-size:10px;color:#2ed878;}
+  .fb-fixtures{flex:1;overflow-y:auto;padding:2px 10px 8px;display:flex;flex-direction:column;gap:7px;}
+  .fx-card{background:var(--panel);border:3px solid #000;padding:7px 9px;box-shadow:2px 2px 0 #000;}
+  .fx-card.played{opacity:.85;}
+  .fx-row{display:flex;align-items:center;gap:6px;}
+  .fx-team{flex:1;display:flex;align-items:center;gap:5px;font-size:12px;min-width:0;}
+  .fx-team.away{justify-content:flex-end;text-align:right;}
+  .fx-team small{color:var(--muted);font-size:9px;}
+  .fx-dot{width:10px;height:10px;border:2px solid #000;flex-shrink:0;}
+  .fx-vs{font-family:"Press Start 2P",monospace;font-size:9px;color:var(--muted);}
+  .fx-final{font-family:"Press Start 2P",monospace;font-size:14px;color:var(--yellow);padding:0 6px;}
+  .fx-result{margin-top:5px;text-align:center;font-family:"Press Start 2P",monospace;font-size:8px;}
+  .fx-result.win{color:var(--green);} .fx-result.lose{color:var(--muted);}
+  .fx-odds-row{display:flex;gap:5px;margin-top:7px;}
+  .fx-odd{
+    flex:1;background:var(--bg-2);border:2px solid #000;color:var(--text);padding:5px 2px;cursor:pointer;
+    font-size:10px;display:flex;flex-direction:column;gap:2px;align-items:center;
+  }
+  .fx-odd b{font-family:"Press Start 2P",monospace;font-size:9px;color:var(--yellow);}
+  .fx-odd.sm{flex-direction:row;gap:4px;}
+  .fx-odd.sel{background:var(--yellow);color:#000;}
+  .fx-odd.sel b{color:#000;}
+  .fx-more{flex:0 0 52px;background:var(--panel-2);border:2px solid #000;color:var(--muted);font-size:9px;cursor:pointer;}
+  .fx-extra{display:none;gap:5px;margin-top:6px;align-items:center;}
+  .fx-extra.open{display:flex;}
+  .fx-cs{flex:1;background:var(--bg-2);color:var(--text);border:2px solid #000;padding:5px;font-size:11px;}
+
+  .fb-betbar{border-top:3px solid #000;background:var(--bg-2);padding:8px 10px;min-height:64px;display:flex;flex-direction:column;justify-content:center;}
+  .fb-hint{font-size:11px;color:var(--muted);text-align:center;line-height:1.6;}
+  .fb-pick{font-size:12px;text-align:center;margin-bottom:6px;}
+  .fb-betrow{display:flex;gap:8px;align-items:center;}
+  .fchips{display:flex;gap:5px;flex:1;}
+  .fchip{
+    background:var(--panel);border:3px solid #000;color:var(--text);min-width:44px;height:40px;padding:0 6px;
+    cursor:pointer;font-family:"Press Start 2P",monospace;font-size:10px;box-shadow:2px 2px 0 #000;
+  }
+  .fchip.sel{background:var(--yellow);color:#000;}
+  .fb-confirm{
+    background:var(--green);color:#000;border:3px solid #000;height:46px;padding:0 14px;cursor:pointer;
+    font-family:"Press Start 2P",monospace;font-size:11px;box-shadow:3px 3px 0 #000;
+  }
+  .fb-confirm.gray{background:var(--panel-2);color:var(--text);}
+  .fb-endrow{display:flex;gap:8px;}
+  .fb-endrow .fb-confirm{flex:1;}
+
   .toast{
     position:fixed;left:50%;bottom:90px;transform:translateX(-50%);
     background:var(--bg-2);border:3px solid var(--yellow);
@@ -477,6 +558,9 @@
     .playing-card .st{font-size:12px;}
     .community{gap:4px;}
     .pbtn{font-size:9px;}
+    .fchip{min-width:38px;padding:0 4px;font-size:8px;}
+    .fx-odd{font-size:9px;padding:4px 1px;}
+    .fx-team{font-size:11px;}
     /* 窄屏：三名对手全部保留，排列在牌桌远端左/中/右 */
     .seat-1{top:6px;}
     .seat-2{top:6px;left:4px;transform:none;}
@@ -526,10 +610,22 @@
         <p>高注码专桌：100 起步、5000 一档，更可 ALL-IN 押上全部身家。黑杰克 3:2 赔率，速战速决。</p>
       </div>
     </button>
+    <button class="place fb" id="goFootball">
+      <div class="art">
+        <div class="art-fb">
+          <div class="art-ball"></div>
+          <div class="art-goal">GOAL</div>
+        </div>
+      </div>
+      <div class="meta">
+        <h2>GOAL · 赌球</h2>
+        <p>像素联赛每轮 4 场。胜平负、大小球 2.5、精确比分三种盘口，冷门比分赔率超 10 倍，看直播收米。</p>
+      </div>
+    </button>
   </div>
   <div class="map-foot">
     <div>持有金币：<span id="mapCoins" style="color:var(--yellow);font-family:'Press Start 2P',monospace;">0</span></div>
-    <div style="margin-top:8px;">三个场所金币互通 · 进度自动保存在浏览器</div>
+    <div style="margin-top:8px;">四个场所金币互通 · 进度自动保存在浏览器</div>
   </div>
 </div>
 
@@ -672,6 +768,35 @@
   </div>
 </div>
 
+<!-- ================= 足球赌球 ================= -->
+<div class="view hidden" id="view-football">
+  <header class="topbar">
+    <div class="brand">
+      <button class="btn-icon" id="fbBack">← MAP</button>
+      <h1 style="margin-left:6px;color:#2ed878;text-shadow:2px 2px 0 #000;">GOAL</h1>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="lbl">金币</span><span class="val gold" id="fbCoinVal">0</span></div>
+    </div>
+  </header>
+
+  <main style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+    <div class="fb-pitch-wrap">
+      <canvas id="fbPitch" height="230"></canvas>
+      <div class="fb-overlay">
+        <div class="fb-scoreboard" id="fbScoreboard">SELECT A MATCH</div>
+        <div class="fb-banner" id="fbBanner"></div>
+      </div>
+    </div>
+    <div class="fb-head">
+      <h2 id="fbRoundTitle">第 1 轮</h2>
+      <button class="btn-cup" id="fbNextRound" style="background:#1f7a34;">下一轮</button>
+    </div>
+    <div class="fb-fixtures" id="fbFixtures"></div>
+    <div class="fb-betbar" id="fbBetbar"></div>
+  </main>
+</div>
+
 <!-- ============ 赛马：结算弹窗 ============ -->
 <div class="modal-mask hidden" id="resultModal">
   <div class="modal">
@@ -752,9 +877,10 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="shared.js?v=3"></script>
-<script src="race.js?v=3"></script>
-<script src="poker.js?v=3"></script>
-<script src="blackjack.js?v=3"></script>
+<script src="shared.js?v=8"></script>
+<script src="race.js?v=8"></script>
+<script src="poker.js?v=8"></script>
+<script src="blackjack.js?v=8"></script>
+<script src="football.js?v=8"></script>
 </body>
 </html>
