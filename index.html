@@ -392,6 +392,63 @@
   }
   .poker-intro p{font-size:12px;color:var(--muted);text-align:center;line-height:1.8;}
 
+  /* ========== 21 点 ========== */
+  .place.bj .art{background:linear-gradient(180deg,#240a14 0%,#52101f 100%);}
+  .place.bj .meta h2{color:var(--red);}
+  .art21{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;}
+  .art21 .mini-cards{font-size:20px;letter-spacing:4px;}
+  .art21 .mini-cards .s-red{color:var(--red);}
+  .art21 .mini-cards .s-white{color:#eee;}
+  .art21 .big21{
+    font-family:"Press Start 2P",monospace;font-size:40px;color:var(--yellow);
+    text-shadow:3px 3px 0 #000;line-height:1;
+  }
+
+  #view-blackjack .topbar{background:#2a1018;}
+  .bj-room{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+  .bj-table{
+    flex:1;position:relative;overflow:hidden;
+    background:radial-gradient(ellipse at center,#5a1626 0%,#260a12 80%);
+    display:flex;flex-direction:column;justify-content:space-between;
+    padding:16px 12px;
+  }
+  .bj-side{display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .bj-label{
+    font-family:"Press Start 2P",monospace;font-size:10px;letter-spacing:2px;color:#e8a8b8;
+    display:flex;gap:10px;align-items:center;
+  }
+  .bj-score{
+    background:var(--bg-2);border:2px solid #000;color:var(--yellow);
+    font-family:"Press Start 2P",monospace;font-size:10px;padding:3px 7px;min-width:26px;text-align:center;
+  }
+  .bj-hand{display:flex;gap:5px;min-height:58px;justify-content:center;flex-wrap:wrap;}
+  .bj-center{display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .bj-banner{
+    font-family:"Press Start 2P",monospace;font-size:15px;text-align:center;min-height:22px;
+    text-shadow:2px 2px 0 #000;letter-spacing:1px;
+  }
+  .bj-banner.win{color:var(--green);}
+  .bj-banner.lose{color:var(--red);}
+  .bj-banner.bj{color:var(--yellow);}
+  .bj-banner.push{color:var(--muted);}
+  .bj-betinfo{font-family:"Press Start 2P",monospace;font-size:9px;color:#f0c8d0;text-align:center;line-height:1.9;}
+
+  .bj-controls{background:#2a1018;border-top:3px solid #000;padding:10px 12px;display:flex;flex-direction:column;gap:8px;}
+  .bj-chiprow{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;}
+  .bj-chiprow .chip{min-width:58px;}
+  .chip.allin{background:var(--red);color:#fff;}
+  .chip.clear{background:transparent;color:var(--muted);}
+  .bj-actionrow{display:flex;gap:8px;}
+  .pbtn-hit{background:var(--green);color:#000;}
+  .pbtn-stand{background:var(--red);color:#fff;}
+  .pbtn-double{background:var(--yellow);color:#000;}
+  .bj-deal{
+    height:48px;background:var(--yellow);color:#000;border:3px solid #000;cursor:pointer;
+    font-family:"Press Start 2P",monospace;font-size:13px;box-shadow:3px 3px 0 #000;
+  }
+  .bj-deal:disabled{opacity:.4;cursor:not-allowed;}
+  .bj-deal:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000;}
+
   .toast{
     position:fixed;left:50%;bottom:90px;transform:translateX(-50%);
     background:var(--bg-2);border:3px solid var(--yellow);
@@ -452,10 +509,22 @@
         <p>德州扑克，你对战 3 个 AI。现金桌随到随玩，或交 G500 报名 SNG 锦标赛争冠军 G1500。</p>
       </div>
     </button>
+    <button class="place bj" id="goBlackjack">
+      <div class="art">
+        <div class="art21">
+          <div class="mini-cards"><span class="s-white">A♠</span><span class="s-red">J♥</span></div>
+          <div class="big21">21</div>
+        </div>
+      </div>
+      <div class="meta">
+        <h2>21 · 黑杰克</h2>
+        <p>高注码专桌：100 起步、5000 一档，更可 ALL-IN 押上全部身家。黑杰克 3:2 赔率，速战速决。</p>
+      </div>
+    </button>
   </div>
   <div class="map-foot">
     <div>持有金币：<span id="mapCoins" style="color:var(--yellow);font-family:'Press Start 2P',monospace;">0</span></div>
-    <div style="margin-top:8px;">两个场所金币互通 · 进度自动保存在浏览器</div>
+    <div style="margin-top:8px;">三个场所金币互通 · 进度自动保存在浏览器</div>
   </div>
 </div>
 
@@ -564,6 +633,40 @@
   </div>
 </div>
 
+<!-- ================= 21 点 ================= -->
+<div class="view hidden" id="view-blackjack">
+  <header class="topbar">
+    <div class="brand">
+      <button class="btn-icon" id="bjBack">← MAP</button>
+      <h1 style="margin-left:6px;color:var(--red);text-shadow:2px 2px 0 #000;">21</h1>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="lbl">金币</span><span class="val gold" id="bjCoinVal">0</span></div>
+    </div>
+  </header>
+
+  <div class="bj-room">
+    <div class="bj-table">
+      <div class="bj-side">
+        <div class="bj-label">DEALER <span class="bj-score" id="bjDealerScore">?</span></div>
+        <div class="bj-hand" id="bjDealerHand"></div>
+      </div>
+
+      <div class="bj-center">
+        <div class="bj-banner" id="bjBanner"></div>
+        <div class="bj-betinfo" id="bjBetInfo"></div>
+      </div>
+
+      <div class="bj-side">
+        <div class="bj-label">YOU <span class="bj-score" id="bjPlayerScore">0</span></div>
+        <div class="bj-hand" id="bjPlayerHand"></div>
+      </div>
+    </div>
+
+    <div class="bj-controls" id="bjControls"></div>
+  </div>
+</div>
+
 <!-- ============ 赛马：结算弹窗 ============ -->
 <div class="modal-mask hidden" id="resultModal">
   <div class="modal">
@@ -647,5 +750,6 @@
 <script src="shared.js?v=3"></script>
 <script src="race.js?v=3"></script>
 <script src="poker.js?v=3"></script>
+<script src="blackjack.js?v=3"></script>
 </body>
 </html>

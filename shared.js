@@ -55,7 +55,7 @@ function addCoins(n){
 }
 function syncCoinDisplays(){
   const v = GameState.coins;
-  ["mapCoins","coinVal","pokerCoinVal"].forEach(id=>{
+  ["mapCoins","coinVal","pokerCoinVal","bjCoinVal"].forEach(id=>{
     const el = $(id);
     if(el) el.textContent = v;
   });
@@ -63,7 +63,7 @@ function syncCoinDisplays(){
 
 /* ===================== 视图切换 ===================== */
 function showView(name){
-  ["map","race","poker"].forEach(v=>{
+  ["map","race","poker","blackjack"].forEach(v=>{
     $("view-"+v).classList.toggle("hidden", v!==name);
   });
   syncCoinDisplays();
@@ -75,6 +75,9 @@ function showView(name){
   }
   if(name === "poker" && typeof PokerModule !== "undefined"){
     PokerModule.enter();
+  }
+  if(name === "blackjack" && typeof BlackjackModule !== "undefined"){
+    BlackjackModule.enter();
   }
 }
 
@@ -142,5 +145,7 @@ showView("map");
 
 $("goRace").onclick = ()=>showView("race");
 $("goPoker").onclick = ()=>showView("poker");
+$("goBlackjack").onclick = ()=>showView("blackjack");
 $("raceBack").onclick = ()=>showView("map");
 $("pokerBack").onclick = ()=>showView("map");
+$("bjBack").onclick = ()=>showView("map");
