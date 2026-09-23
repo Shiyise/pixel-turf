@@ -136,6 +136,22 @@
   }
   .btn-cup.active{background:var(--yellow);color:#000;}
   .btn-cup:disabled{opacity:.4;cursor:not-allowed;}
+  .race-tools{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+  .rt-btn{
+    background:var(--panel-2);border:2px solid #000;color:var(--text);
+    padding:4px 8px;cursor:pointer;font-family:"Press Start 2P",monospace;font-size:8px;
+  }
+  .rt-btn.used{opacity:.45;cursor:not-allowed;}
+  .rt-btn.dope-btn{background:#3a2a10;border-color:#8a6a1a;color:#ffd800;}
+  .rt-btn.dope-btn.doped{background:var(--yellow);color:#000;}
+  .rumor-badge{
+    position:absolute;top:26px;right:6px;z-index:1;
+    font-family:"Press Start 2P",monospace;font-size:9px;
+    padding:2px 4px;border:2px solid #000;
+  }
+  .rumor-badge.hot{background:var(--yellow);color:#000;}
+  .rumor-badge.sick{background:var(--red);color:#fff;}
+  .rumor-badge.champ{background:var(--purple);color:#fff;}
 
   .horse-list{
     flex:1;overflow-y:auto;padding:6px 10px 10px;
@@ -538,6 +554,21 @@
   .fb-confirm.gray{background:var(--panel-2);color:var(--text);}
   .fb-endrow{display:flex;gap:8px;}
   .fb-endrow .fb-confirm{flex:1;}
+  .fb-briberow{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap;}
+  .bribe-btn{
+    flex:1;min-width:86px;background:var(--panel);border:2px solid #000;color:var(--text);
+    padding:4px 2px;cursor:pointer;font-size:9px;line-height:1.5;
+  }
+  .bribe-btn.sel{background:var(--yellow);color:#000;border-color:var(--yellow);}
+  .bribe-btn small{opacity:.75;}
+  .tier{
+    font-size:8px;font-weight:700;padding:1px 3px;border:1px solid #000;
+    flex-shrink:0;line-height:1.3;font-family:"Press Start 2P",monospace;
+  }
+  .tier.S{background:var(--yellow);color:#000;}
+  .tier.A{background:var(--purple);color:#fff;}
+  .tier.B{background:#3a8aff;color:#fff;}
+  .tier.C{background:var(--muted);color:#0a0f1a;}
 
   /* ========== 地图：VIP 厅卡片 / 股东角标 ========== */
   .place{position:relative;}
@@ -589,6 +620,163 @@
   .prop-btn.confirm{background:var(--red);color:#fff;}
   .prop-btn:disabled{background:var(--panel-2);color:var(--muted);box-shadow:none;cursor:default;}
   .prop-btn:active:not(:disabled){transform:translate(2px,2px);box-shadow:0 0 0 #000;}
+
+  /* ========== 地图：暗巷 / 博饼坊卡片 ========== */
+  .place.bm .art{background:linear-gradient(180deg,#14081a 0%,#2a0d33 100%);}
+  .place.bm .meta h2{color:#ff9d5c;}
+  .art-bm{display:flex;align-items:center;gap:10px;}
+  .art-bm .bm-door{
+    font-family:"Press Start 2P",monospace;font-size:30px;color:#1a0d20;
+    background:#6b3fa0;border:3px solid #000;padding:8px 10px;
+    box-shadow:3px 3px 0 #000, inset -3px -3px 0 rgba(0,0,0,.3);
+  }
+  .art-bm .bm-glow{
+    font-family:"Press Start 2P",monospace;font-size:22px;color:#ff9d5c;
+    text-shadow:0 0 12px rgba(255,157,92,.8);letter-spacing:2px;
+  }
+  .place.bobing .art{background:linear-gradient(180deg,#2a1408 0%,#5a2a10 100%);}
+  .place.bobing .meta h2{color:#ffb52e;}
+  .art-bb{display:flex;align-items:center;gap:10px;}
+  .art-bb .bb-pot{
+    font-family:"Press Start 2P",monospace;font-size:28px;color:#5a2a10;
+    background:var(--yellow);border:3px solid #000;padding:8px 12px;
+    box-shadow:3px 3px 0 #000, inset -3px -3px 0 rgba(0,0,0,.25);
+    transform:rotate(-4deg);
+  }
+  .art-bb .bb-dice-art{
+    font-family:"Press Start 2P",monospace;font-size:22px;color:#ffb52e;
+    text-shadow:0 0 10px rgba(255,181,46,.7);
+  }
+
+  /* ========== 暗巷黑市视图 ========== */
+  #view-blackmarket{
+    overflow-y:auto;
+    background:
+      radial-gradient(circle at 30% 15%, rgba(107,63,160,.18), transparent 45%),
+      linear-gradient(180deg,#16091c 0%,#0c0510 100%);
+  }
+  .bm-hall{max-width:720px;margin:0 auto;padding:18px 16px 40px;}
+  .bm-title{text-align:center;margin-bottom:6px;}
+  .bm-title h1{
+    font-family:"Press Start 2P",monospace;font-size:18px;color:#ff9d5c;
+    text-shadow:3px 3px 0 #000,0 0 16px rgba(255,157,92,.4);
+  }
+  .bm-title p{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.7;}
+  .bm-status{
+    margin:14px auto 0;max-width:560px;text-align:center;font-size:11px;color:#ffb9c8;
+    background:rgba(120,20,40,.25);border:2px solid #4a1020;padding:7px 10px;line-height:1.6;
+  }
+  .bm-list{display:flex;flex-direction:column;gap:10px;margin-top:16px;}
+  .bm-row{
+    display:flex;align-items:center;gap:12px;
+    background:var(--panel);border:3px solid #000;box-shadow:3px 3px 0 #000;
+    padding:10px 12px;
+  }
+  .bm-icon{
+    width:44px;height:44px;flex-shrink:0;background:#1d0f2a;border:3px solid #000;
+    display:flex;align-items:center;justify-content:center;
+    font-family:"Press Start 2P",monospace;font-size:16px;color:#ff9d5c;
+    box-shadow:inset 0 0 0 2px rgba(255,157,92,.25);
+  }
+  .bm-info{flex:1;min-width:0;}
+  .bm-name{font-size:13px;font-weight:700;}
+  .bm-badge{
+    font-size:8px;background:var(--green);color:#000;border:1px solid #000;
+    padding:1px 4px;margin-left:4px;vertical-align:1px;
+  }
+  .bm-desc{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.5;}
+  .bm-risk{font-size:9px;color:#ff9d5c;margin-top:3px;}
+  .bm-btn{
+    flex-shrink:0;background:var(--yellow);color:#000;border:3px solid #000;
+    height:42px;padding:0 14px;cursor:pointer;font-family:"Press Start 2P",monospace;
+    font-size:9px;box-shadow:2px 2px 0 #000;
+  }
+  .bm-btn.confirm{background:var(--red);color:#fff;}
+  .bm-btn:disabled{background:var(--panel-2);color:var(--muted);box-shadow:none;cursor:default;}
+  .bm-btn:active:not(:disabled){transform:translate(2px,2px);box-shadow:0 0 0 #000;}
+  .bm-foot{
+    margin-top:22px;text-align:center;font-size:10px;color:var(--muted);line-height:1.9;
+    border:2px dashed #3a2a55;padding:12px;
+  }
+
+  /* ========== 博饼坊视图 ========== */
+  #view-bobing{
+    overflow-y:auto;
+    background:
+      radial-gradient(circle at 50% 10%, rgba(255,181,46,.12), transparent 50%),
+      linear-gradient(180deg,#2a1408 0%,#150a04 100%);
+  }
+  .bb-hall{max-width:720px;margin:0 auto;padding:16px 14px 40px;}
+  .bb-title{text-align:center;margin-bottom:8px;}
+  .bb-title h1{
+    font-family:"Press Start 2P",monospace;font-size:18px;color:#ffb52e;
+    text-shadow:3px 3px 0 #000,0 0 14px rgba(255,181,46,.45);
+  }
+  .bb-title p{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.7;}
+  .bb-mode{display:flex;gap:8px;justify-content:center;margin-top:12px;}
+  .chip-btn{
+    background:var(--panel);border:3px solid #000;color:var(--text);
+    padding:7px 12px;cursor:pointer;font-family:"Press Start 2P",monospace;font-size:9px;
+    box-shadow:2px 2px 0 #000;
+  }
+  .chip-btn.active{background:var(--yellow);color:#000;}
+  .chip-btn.locked{opacity:.4;cursor:not-allowed;}
+  .chip-btn:disabled{opacity:.4;cursor:not-allowed;}
+  .bb-dice-row{display:flex;gap:8px;justify-content:center;margin:6px 0;}
+  .bb-die{
+    width:44px;height:44px;background:#f4f4f4;border:3px solid #000;color:#111;
+    display:flex;align-items:center;justify-content:center;
+    font-family:"Press Start 2P",monospace;font-size:20px;
+    box-shadow:3px 3px 0 #000;
+  }
+  .bb-die.empty{background:var(--panel-2);}
+  .bb-die span{color:#111;}
+  .bb-result{
+    background:var(--bg-2);border:3px solid #000;padding:12px;
+    text-align:center;margin-top:12px;box-shadow:3px 3px 0 #000;
+  }
+  .bb-resline{
+    font-family:"Press Start 2P",monospace;font-size:15px;margin-top:8px;letter-spacing:2px;
+  }
+  .bb-resline.win{color:var(--yellow);}
+  .bb-resline.loss{color:var(--red);}
+  .bb-resline.muted{color:var(--muted);}
+  .bb-resmoney{
+    font-family:"Press Start 2P",monospace;font-size:13px;margin-top:6px;
+  }
+  .bb-resmoney:empty{display:none;}
+  .bb-loaded-row{display:flex;justify-content:center;margin-top:10px;}
+  .bb-loaded-btn{
+    background:#6b3fa0;color:#fff;border:3px solid #000;padding:8px 14px;cursor:pointer;
+    font-family:"Press Start 2P",monospace;font-size:9px;box-shadow:2px 2px 0 #000;
+  }
+  .bb-loaded-btn.active{background:var(--yellow);color:#000;}
+  .bb-loaded-btn:disabled{opacity:.5;cursor:not-allowed;}
+  .bb-table{
+    margin-top:14px;background:var(--panel);border:3px solid #000;padding:8px 10px;
+    box-shadow:3px 3px 0 #000;
+  }
+  .bb-trow{
+    display:flex;justify-content:space-between;font-size:11px;padding:4px 2px;
+    border-bottom:2px dashed var(--line);
+  }
+  .bb-trow:last-child{border-bottom:none;}
+  .bb-trow span:last-child{font-family:"Press Start 2P",monospace;font-size:9px;color:var(--yellow);}
+  .bb-trow.loss span:last-child{color:var(--red);}
+  .bb-rollrow{display:flex;gap:8px;margin-top:12px;}
+  .bb-roll{
+    flex:1;height:48px;background:var(--yellow);color:#000;border:3px solid #000;cursor:pointer;
+    font-family:"Press Start 2P",monospace;font-size:12px;box-shadow:3px 3px 0 #000;
+  }
+  .bb-roll:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000;}
+  .bb-roll:disabled{opacity:.5;cursor:not-allowed;}
+
+  /* ========== 随机事件弹窗 ========== */
+  .event-mask{z-index:75;}
+  .event-mask .modal{max-width:400px;}
+  .ev-body{font-size:13px;line-height:1.9;color:var(--text);margin:10px 0 4px;}
+  .ev-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
+  .ev-btn{flex:1;min-width:110px;}
 
   /* ========== VIP 厅视图 ========== */
   #view-vip{
@@ -710,6 +898,9 @@
     .fchip{min-width:38px;padding:0 4px;font-size:8px;}
     .fx-odd{font-size:9px;padding:4px 1px;}
     .fx-team{font-size:11px;}
+    .bb-die{width:38px;height:38px;font-size:16px;}
+    .bm-icon{width:38px;height:38px;font-size:13px;}
+    .bb-resline{font-size:13px;}
     /* 窄屏：三名对手全部保留，排列在牌桌远端左/中/右 */
     .seat-1{top:6px;}
     .seat-2{top:6px;left:4px;transform:none;}
@@ -786,6 +977,24 @@
       <div class="meta">
         <h2>GOAL · 赌球</h2>
         <p>五大联赛 20 支豪门，11 人制对决，每轮 4 场。胜平负、大小球 2.5、精确比分三种盘口，看直播收米。</p>
+      </div>
+    </button>
+    <button class="place bm" id="goBlackmarket">
+      <div class="art">
+        <div class="art-bm"><span class="bm-door">暗</span><span class="bm-glow">巷</span></div>
+      </div>
+      <div class="meta">
+        <h2>BLACK MARKET · 暗巷</h2>
+        <p>透视镜、换牌器、兴奋剂、灌铅骰子、免罪金牌。出千有风险，被抓要罚款，通缉满 3 次当夜封杀。</p>
+      </div>
+    </button>
+    <button class="place bobing" id="goBobing">
+      <div class="art">
+        <div class="art-bb"><span class="bb-pot">博</span><span class="bb-dice-art">饼</span></div>
+      </div>
+      <div class="meta">
+        <h2>BOBING · 博饼坊</h2>
+        <p>六骰博状元：一秀到插金花，掷一把 5 分钟。灌铅骰子加持，VIP 桌最高注 G10,000。</p>
       </div>
     </button>
     <button class="place vip locked" id="goVip">
@@ -885,6 +1094,7 @@
           <select id="myPick"><option value="-1">不派</option></select>
           <button class="btn-cup" id="btnCup">CUP G300</button>
         </div>
+        <div class="race-tools" id="raceTools"></div>
       </div>
       <div class="horse-list" id="horseList"></div>
       <div class="bet-bar">
@@ -1024,6 +1234,68 @@
   </main>
 </div>
 
+<!-- ================= 暗巷黑市 ================= -->
+<div class="view hidden" id="view-blackmarket">
+  <header class="topbar" style="background:#1d0f2a;">
+    <div class="brand">
+      <button class="btn-icon" id="bmBack">← MAP</button>
+      <h1 style="margin-left:6px;color:#ff9d5c;text-shadow:2px 2px 0 #000;">BLACK</h1>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="lbl">时间</span><span class="val night-clock">18:00</span></div>
+      <div class="stat"><span class="lbl">金币</span><span class="val gold" id="bmCoinVal">0</span></div>
+    </div>
+  </header>
+  <div class="bm-hall">
+    <div class="bm-title">
+      <h1>BLACK MARKET</h1>
+      <p>暗巷尽头的铁门后，什么都卖。<br>道具按次生效、本夜有效；使用即可能被抓。</p>
+    </div>
+    <div class="bm-status" id="bmStatus">—</div>
+    <div class="bm-list" id="bmList"></div>
+    <div class="bm-foot">
+      被抓：普通厅罚 G2,000 · VIP 厅罚 G20,000 · 罚不起直接进局子<br>
+      通缉满 3 次：黑市本夜封杀 · 新一夜通缉清零
+    </div>
+  </div>
+</div>
+
+<!-- ================= 博饼坊 ================= -->
+<div class="view hidden" id="view-bobing">
+  <header class="topbar" style="background:#3a1c08;">
+    <div class="brand">
+      <button class="btn-icon" id="bbBack">← MAP</button>
+      <h1 style="margin-left:6px;color:#ffb52e;text-shadow:2px 2px 0 #000;">BOBING</h1>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="lbl">时间</span><span class="val night-clock">18:00</span></div>
+      <div class="stat"><span class="lbl">金币</span><span class="val gold" id="bbCoinVal">0</span></div>
+    </div>
+  </header>
+  <div class="bb-hall">
+    <div class="bb-title">
+      <h1>博饼坊</h1>
+      <p>六粒骰子一掷定状元，一局 5 分钟。</p>
+    </div>
+    <div class="bb-mode" id="bbModeBtns"></div>
+    <div class="bb-result" id="bbResult">
+      <div class="bb-dice-row">
+        <div class="bb-die empty"></div><div class="bb-die empty"></div><div class="bb-die empty"></div>
+        <div class="bb-die empty"></div><div class="bb-die empty"></div><div class="bb-die empty"></div>
+      </div>
+      <div class="bb-resline muted">掷骰定状元</div>
+    </div>
+    <div class="bb-chiprow" style="display:flex;gap:6px;justify-content:center;margin-top:12px;" id="bbChipBtns"></div>
+    <div class="bb-loaded-row" id="bbLoadedRow">
+      <button class="bb-loaded-btn hidden" id="bbLoadedBtn">用灌铅骰子</button>
+    </div>
+    <div class="bb-rollrow">
+      <button class="bb-roll" id="bbRoll">ROLL · 掷骰</button>
+    </div>
+    <div class="bb-table" id="bbTable"></div>
+  </div>
+</div>
+
 <!-- ============ 赛马：结算弹窗 ============ -->
 <div class="modal-mask hidden" id="resultModal">
   <div class="modal">
@@ -1102,6 +1374,16 @@
   </div>
 </div>
 
+<!-- ============ 随机事件弹窗 ============ -->
+<div class="modal-mask event-mask hidden" id="eventModal">
+  <div class="modal">
+    <h2 id="evTitle">事件</h2>
+    <div class="sub">夜幕下什么都会发生</div>
+    <div class="ev-body" id="evBody"></div>
+    <div class="ev-btns" id="evBtns"></div>
+  </div>
+</div>
+
 <!-- ============ 一夜结算 ============ -->
 <div class="night-result" id="nightResult">
   <div class="night-card">
@@ -1116,10 +1398,13 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="shared.js?v=11"></script>
-<script src="race.js?v=11"></script>
-<script src="poker.js?v=11"></script>
-<script src="blackjack.js?v=11"></script>
-<script src="football.js?v=11"></script>
+<script src="shared.js?v=12"></script>
+<script src="cheat.js?v=12"></script>
+<script src="events.js?v=12"></script>
+<script src="race.js?v=12"></script>
+<script src="poker.js?v=12"></script>
+<script src="blackjack.js?v=12"></script>
+<script src="football.js?v=12"></script>
+<script src="bobing.js?v=12"></script>
 </body>
 </html>

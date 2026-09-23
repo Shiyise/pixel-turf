@@ -5,31 +5,45 @@
  * ======================================================= */
 const TEAMS = [
   // 英超
-  {id:0,  name:"曼城",       short:"MCI", en:"MAN CITY",      color:"#6cabdd", rating:1.16, lg:"英超"},
-  {id:1,  name:"阿森纳",     short:"ARS", en:"ARSENAL",       color:"#ef0107", rating:1.12, lg:"英超"},
-  {id:2,  name:"利物浦",     short:"LIV", en:"LIVERPOOL",     color:"#c8102e", rating:1.12, lg:"英超"},
-  {id:3,  name:"切尔西",     short:"CHE", en:"CHELSEA",       color:"#034694", rating:1.07, lg:"英超"},
+  {id:0,  name:"曼城",       short:"MCI", en:"MAN CITY",      color:"#6cabdd", rating:1.20, lg:"英超"},
+  {id:1,  name:"阿森纳",     short:"ARS", en:"ARSENAL",       color:"#ef0107", rating:1.15, lg:"英超"},
+  {id:2,  name:"利物浦",     short:"LIV", en:"LIVERPOOL",     color:"#c8102e", rating:1.15, lg:"英超"},
+  {id:3,  name:"切尔西",     short:"CHE", en:"CHELSEA",       color:"#034694", rating:1.05, lg:"英超"},
   // 西甲
-  {id:4,  name:"皇家马德里", short:"RMA", en:"REAL MADRID",   color:"#febe10", rating:1.15, lg:"西甲"},
-  {id:5,  name:"巴塞罗那",   short:"BAR", en:"BARCELONA",     color:"#a50044", rating:1.10, lg:"西甲"},
-  {id:6,  name:"马德里竞技", short:"ATM", en:"ATLETICO",      color:"#272e61", rating:1.05, lg:"西甲"},
+  {id:4,  name:"皇家马德里", short:"RMA", en:"REAL MADRID",   color:"#febe10", rating:1.19, lg:"西甲"},
+  {id:5,  name:"巴塞罗那",   short:"BAR", en:"BARCELONA",     color:"#a50044", rating:1.14, lg:"西甲"},
+  {id:6,  name:"马德里竞技", short:"ATM", en:"ATLETICO",      color:"#272e61", rating:1.10, lg:"西甲"},
   {id:7,  name:"比利亚雷亚尔",short:"VIL",en:"VILLARREAL",    color:"#f5d547", rating:0.95, lg:"西甲"},
   // 意甲
-  {id:8,  name:"国际米兰",   short:"INT", en:"INTER MILAN",   color:"#0068a8", rating:1.10, lg:"意甲"},
-  {id:9,  name:"那不勒斯",   short:"NAP", en:"NAPOLI",        color:"#12a0d7", rating:1.03, lg:"意甲"},
-  {id:10, name:"AC米兰",     short:"MIL", en:"AC MILAN",      color:"#fb090b", rating:1.02, lg:"意甲"},
-  {id:11, name:"尤文图斯",   short:"JUV", en:"JUVENTUS",      color:"#e8e8e8", rating:1.00, lg:"意甲"},
+  {id:8,  name:"国际米兰",   short:"INT", en:"INTER MILAN",   color:"#0068a8", rating:1.12, lg:"意甲"},
+  {id:9,  name:"那不勒斯",   short:"NAP", en:"NAPOLI",        color:"#12a0d7", rating:1.05, lg:"意甲"},
+  {id:10, name:"AC米兰",     short:"MIL", en:"AC MILAN",      color:"#fb090b", rating:1.03, lg:"意甲"},
+  {id:11, name:"尤文图斯",   short:"JUV", en:"JUVENTUS",      color:"#e8e8e8", rating:1.04, lg:"意甲"},
   // 德甲
-  {id:12, name:"拜仁慕尼黑", short:"BAY", en:"BAYERN",        color:"#dc052d", rating:1.13, lg:"德甲"},
-  {id:13, name:"多特蒙德",   short:"DOR", en:"DORTMUND",      color:"#fde100", rating:1.05, lg:"德甲"},
-  {id:14, name:"莱比锡",     short:"RBL", en:"LEIPZIG",       color:"#dd0741", rating:0.99, lg:"德甲"},
-  {id:15, name:"门兴",       short:"BMG", en:"GLADBACH",      color:"#00a651", rating:0.92, lg:"德甲"},
+  {id:12, name:"拜仁慕尼黑", short:"BAY", en:"BAYERN",        color:"#dc052d", rating:1.18, lg:"德甲"},
+  {id:13, name:"多特蒙德",   short:"DOR", en:"DORTMUND",      color:"#fde100", rating:1.06, lg:"德甲"},
+  {id:14, name:"莱比锡",     short:"RBL", en:"LEIPZIG",       color:"#dd0741", rating:1.02, lg:"德甲"},
+  {id:15, name:"门兴",       short:"BMG", en:"GLADBACH",      color:"#00a651", rating:0.90, lg:"德甲"},
   // 法甲
-  {id:16, name:"巴黎圣日耳曼",short:"PSG",en:"PARIS SG",      color:"#004170", rating:1.14, lg:"法甲"},
-  {id:17, name:"马赛",       short:"MAR", en:"MARSEILLE",     color:"#9fd8ff", rating:0.97, lg:"法甲"},
-  {id:18, name:"摩纳哥",     short:"MON", en:"MONACO",        color:"#e01e13", rating:0.94, lg:"法甲"},
-  {id:19, name:"里昂",       short:"LYO", en:"LYON",          color:"#1e3a8a", rating:0.93, lg:"法甲"},
+  {id:16, name:"巴黎圣日耳曼",short:"PSG",en:"PARIS SG",      color:"#004170", rating:1.17, lg:"法甲"},
+  {id:17, name:"马赛",       short:"MAR", en:"MARSEILLE",     color:"#9fd8ff", rating:1.00, lg:"法甲"},
+  {id:18, name:"摩纳哥",     short:"MON", en:"MONACO",        color:"#e01e13", rating:0.98, lg:"法甲"},
+  {id:19, name:"里昂",       short:"LYO", en:"LYON",          color:"#1e3a8a", rating:0.95, lg:"法甲"},
 ];
+/* 档位：S ≥1.17 / A ≥1.12 / B ≥0.98 / C 其余 */
+function tierOf(r){
+  if(r>=1.17) return "S";
+  if(r>=1.12) return "A";
+  if(r>=0.98) return "B";
+  return "C";
+}
+/* 贿赂三档：塞小费 / 买通主裁 / 买通全队（成本=下注额比例，下限 G300） */
+const BRIBES = [
+  {id:"small", name:"塞小费",   cost:0.20, hit:0.25, mul:0.85, catch:0.10},
+  {id:"ref",   name:"买通主裁", cost:0.40, hit:0.60, mul:0.70, catch:0.20},
+  {id:"team",  name:"买通全队", cost:0.60, hit:1.00, mul:0.45, catch:0.25},
+];
+function bribeCost(b, amount){ return Math.max(300, Math.round(amount*b.cost)); }
 const CS_PICKS = ["1-0","2-0","2-1","3-1","1-1","2-2","0-0","0-1","1-2","0-2"];
 const FB_CHIPS = [10,50,100,500];
 const GOAL_PAUSE = 1300;
@@ -92,7 +106,8 @@ const FootballModule = (()=>{
       f.odds=fixtureOdds(f);
       fixtures.push(f);
     }
-    state={fixtures, sel:null, openFid:-1, amount:50, phase:"list", lastRet:0};
+    state={fixtures, sel:null, openFid:-1, amount:50, phase:"list", lastRet:0,
+           bribe:null, bribeBan:false};
     $("fbBanner").textContent="";
     render();
     resizePitch(); drawPitchBg();
@@ -112,6 +127,20 @@ const FootballModule = (()=>{
     render();
   }
 
+  /* 命中判定（按比分 + 盘口） */
+  function satisfiesBet(s, b){
+    const h=s[0], a=s[1];
+    if(b.type==="1x2") return (b.pick==="h"&&h>a)||(b.pick==="d"&&h===a)||(b.pick==="a"&&h<a);
+    if(b.type==="ou") return b.pick==="over" ? (h+a>=3) : (h+a<=2);
+    return b.pick===h+"-"+a;
+  }
+  function sampleScoreGiven(m, test){
+    for(let tries=0;tries<300;tries++){
+      const s=sampleScore(m);
+      if(test(s)) return s;
+    }
+    return sampleScore(m);
+  }
   function confirmBet(){
     const s=state.sel;
     if(!canSpend(45)){ toast("天亮前看不完这场球了"); return; }
@@ -119,9 +148,36 @@ const FootballModule = (()=>{
     if(state.amount>GameState.coins){ toast("金币不足"); return; }
     const f=state.fixtures[s.fid];
     if(f.score){ toast("该场已完赛"); return; }
+    /* 贿赂：先扣贿赂费，再判定败露 */
+    let bribeUsed = null;
+    if(state.bribe && !state.bribeBan){
+      const br = BRIBES.find(x=>x.id===state.bribe);
+      const cost = bribeCost(br, state.amount);
+      if(GameState.coins < cost){ toast("金币不够贿赂"); return; }
+      addCoins(-cost);
+      if(Math.random() < br.catch){
+        /* 败露：本场作废、退还赌注、罚 G1,000、本轮禁赛 */
+        toast("贿赂败露！本场作废 · 罚 G1,000 · 本轮禁赛");
+        addCoins(-1000);
+        state.bribeBan = true;
+        state.bribe = null;
+        state.sel = null;
+        render();
+        return;
+      }
+      bribeUsed = br;
+    }
     addCoins(-state.amount);
-    f.bet={type:s.type, pick:s.pick, label:s.label, odds:s.odds, amount:state.amount};
-    f.score=sampleScore(f.m);
+    f.bet={type:s.type, pick:s.pick, label:s.label, odds:s.odds, amount:state.amount,
+           bribe:bribeUsed?bribeUsed.id:null};
+    /* 贿赂：按命中加成，直接强制重采样出"命中你盘口"的比分 */
+    if(bribeUsed && Math.random() < bribeUsed.hit){
+      f.score = sampleScoreGiven(f.m, sc=>satisfiesBet(sc, f.bet));
+      f.bet._rigged = true;
+    } else {
+      f.score=sampleScore(f.m);
+    }
+    state.bribe=null;
     // 同一轮其他比赛同时完赛
     state.fixtures.forEach(o=>{ if(!o.score) o.score=sampleScore(o.m); });
     state.phase="live";
@@ -177,7 +233,7 @@ const FootballModule = (()=>{
           <div class="fx-result ${ret>0?"win":"lose"}">${
             f.bet ? (ret>0?("投注 "+f.bet.label+" 命中 +G"+(ret-f.bet.amount)) : ("投注 "+f.bet.label+" 未中 -G"+f.bet.amount))
                   : "未投注"
-          }</div>`;
+          }${f.bet && f.bet.bribe ? " · 买通"+BRIBES.find(x=>x.id===f.bet.bribe).name : ""}</div>`;
       } else {
         let csOptions='<option value="">正确比分…</option>';
         CS_PICKS.forEach(cs=>{
@@ -186,9 +242,9 @@ const FootballModule = (()=>{
         });
         card.innerHTML=`
           <div class="fx-row">
-            <div class="fx-team"><span class="fx-dot" style="background:${f.home.color}"></span><span class="fx-lg">${f.home.lg}</span><b>${f.home.name}</b><small>${f.home.rating.toFixed(2)}</small></div>
+            <div class="fx-team"><span class="fx-dot" style="background:${f.home.color}"></span><span class="fx-lg">${f.home.lg}</span><span class="tier ${tierOf(f.home.rating)}">${tierOf(f.home.rating)}</span><b>${f.home.name}</b><small>${f.home.rating.toFixed(2)}</small></div>
             <div class="fx-vs">VS</div>
-            <div class="fx-team away"><small>${f.away.rating.toFixed(2)}</small><b>${f.away.name}</b><span class="fx-lg">${f.away.lg}</span><span class="fx-dot" style="background:${f.away.color}"></span></div>
+            <div class="fx-team away"><small>${f.away.rating.toFixed(2)}</small><b>${f.away.name}</b><span class="tier ${tierOf(f.away.rating)}">${tierOf(f.away.rating)}</span><span class="fx-lg">${f.away.lg}</span><span class="fx-dot" style="background:${f.away.color}"></span></div>
           </div>
           <div class="fx-odds-row">
             <button class="fx-odd${sel("1x2","h")}" data-k="${f.id}:1x2:h">主胜<b>@${o.h}</b></button>
@@ -248,9 +304,22 @@ const FootballModule = (()=>{
           ${FB_CHIPS.map(c=>`<button class="fchip ${state.amount===c?"sel":""}" data-amt="${c}">${c}</button>`).join("")}
         </div>
         <button class="fb-confirm" id="fbConfirm">下注 G${state.amount}</button>
-      </div>`;
+      </div>
+      ${state.bribeBan
+        ? `<div class="fb-hint" style="color:var(--red);">贿赂败露 · 本轮禁赛，下一轮恢复</div>`
+        : `<div class="fb-briberow">
+            <button class="bribe-btn ${state.bribe==="none"?"sel":""}" data-bribe="none">不搞</button>
+            ${BRIBES.map(br=>{
+              const cost=bribeCost(br, state.amount);
+              return `<button class="bribe-btn ${state.bribe===br.id?"sel":""}" data-bribe="${br.id}">${br.name} G${cost}<br><small>命中+${Math.round(br.hit*100)}% 抓${Math.round(br.catch*100)}%</small></button>`;
+            }).join("")}
+          </div>`}
+      <div class="fb-hint" style="margin-top:4px;">贿赂在确认下注时收取 · 败露则本场作废并罚 G1,000</div>`;
     bar.querySelectorAll(".fchip").forEach(b=>{
       b.onclick=()=>{ state.amount=Math.min(GameState.coins,+b.dataset.amt); render(); };
+    });
+    bar.querySelectorAll(".bribe-btn").forEach(b=>{
+      b.onclick=()=>{ state.bribe = b.dataset.bribe; render(); };
     });
     $("fbConfirm").onclick=confirmBet;
   }

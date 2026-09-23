@@ -18,11 +18,18 @@ const TRAIN_COST = 50, TRAIN_GAIN = 0.05, TRAIN_CHANCE = 0.7;
 const BREED_COST = 800, CUP_ENTRY = 300;
 const CUP_PRIZES = [3000, 800, 300];
 const MAX_STABLE = 5, TRACK_LEN = 1000;
+/* 赛马传闻（马经小报 / 马夫悄悄话 / 内幕冠军） */
+const RUMORS = [
+  { id:"hot",   name:"马经小报",   price:100, desc:"点出状态最火的热门马", hit:0.80 },
+  { id:"sick",  name:"马夫悄悄话", price:200, desc:"点出带伤拉胯的冷门马", hit:0.85 },
+  { id:"champ", name:"内幕冠军",   price:600, desc:"点名今晚冠军（可能烟雾弹）", hit:0.70 },
+];
 
 const RaceModule = (()=>{
   let state = {
     raceHorses: [], selected: null, bet: 0,
     myHorseSlot: -1, cupMode: false, lastWinner: null, phase: "betting",
+    rumor: null, doped: false,
   };
 
   function effAttrs(s){
@@ -100,7 +107,10 @@ const RaceModule = (()=>{
           <div class="attr-row"><span class="lbl">速度</span><span class="bar"><span class="fill" style="width:${Math.min(100,h.speed/1.5*100)}%"></span></span></div>
           <div class="attr-row"><span class="lbl">耐力</span><span class="bar"><span class="fill" style="width:${Math.min(100,h.stamina/1.5*100)}%"></span></span></div>
           <div class="attr-row"><span class="lbl">爆发</span><span class="bar"><span class="fill" style="width:${h.burst/0.4*100}%"></span></span></div>
-        </div>`;
+        </div>
+        ${state.rumor && state.rumor.horseIdx===i
+          ? `<span class="rumor-badge ${state.rumor.type}">${{hot:"热",sick:"伤",champ:"冠"}[state.rumor.type]}</span>`
+          : ""}`;
       card.onclick = ()=>{
         if(state.phase!=="betting") return;
         state.selected = (state.selected===i?null:i);
@@ -119,6 +129,78 @@ const RaceModule = (()=>{
       btn.disabled = state.bet<=0 || state.bet>GameState.coins;
     }
     $("betAmt").textContent = "G " + state.bet;
+  }
+
+  /* ---- 传闻与兴奋剂工具条 ---- */
+  function horseScore(h){ return h.speed + h.stamina*0.7 + h.consistency*0.5; }
+  function idxOfTop(){ let bi=0; state.raceHorses.forEach((h,i)=>{ if(horseScore(h)>horseScore(state.raceHorses[bi])) bi=i; }); return bi; }
+  function idxOfLow(){ let bi=0; state.raceHorses.forEach((h,i)=>{ if(horseScore(h)<horseScore(state.raceHorses[bi])) bi=i; }); return bi; }
+  function idxOfSimWinner(){
+    /* 预跑模拟一把，定"今晚真冠军"（内幕线索用） */
+    let bi=0, bs=-1;
+    state.raceHorses.forEach((h,i)=>{
+      const s = horseScore(h) + Math.random()*0.9;
+      if(s>bs){ bs=s; bi=i; }
+    });
+    return bi;
+  }
+  function pickOther(ex){
+    const others = state.raceHorses.map((_,i)=>i).filter(i=>i!==ex);
+    return others[Math.floor(Math.random()*others.length)];
+  }
+  function buyRumor(r){
+    if(state.rumor) return;
+    if(GameState.coins<r.price){ toast("金币不足"); return; }
+    addCoins(-r.price);
+    const real = Math.random() < r.hit;
+    let idx;
+    if(r.id==="hot"){ const t=idxOfTop();  idx = real?t:pickOther(t); }
+    else if(r.id==="sick"){ const t=idxOfLow(); idx = real?t:pickOther(t); }
+    else { const t=idxOfSimWinner(); idx = real?t:pickOther(t); }
+    state.rumor = { type:r.id, horseIdx:idx, real };
+    toast((real?"传闻 · ":"烟雾弹 · ")+RUMORS.find(x=>x.id===r.id).name+"指向 "+state.raceHorses[idx].name);
+    renderHorses();
+    renderRaceTools();
+  }
+  function renderRaceTools(){
+    const box = $("raceTools");
+    if(!box) return;
+    box.innerHTML = "";
+    if(state.phase!=="betting") return;
+    if(!state.rumor){
+      RUMORS.forEach(r=>{
+        const b = document.createElement("button");
+        b.className = "rt-btn";
+        b.textContent = r.name+" G"+r.price;
+        b.disabled = GameState.coins < r.price;
+        b.onclick = ()=>buyRumor(r);
+        box.appendChild(b);
+      });
+    } else {
+      const used = document.createElement("button");
+      used.className = "rt-btn used";
+      used.textContent = "传闻已买（"+RUMORS.find(x=>x.id===state.rumor.type).name+"）";
+      box.appendChild(used);
+    }
+    const dopeN = cheatCount("dope");
+    if(dopeN>0 && !state.doped){
+      const b = document.createElement("button");
+      b.className = "rt-btn dope-btn";
+      b.textContent = "药 · 兴奋剂 x"+dopeN;
+      b.onclick = ()=>{
+        if(useCheat("dope","normal")){
+          state.doped = true;
+          toast("兴奋剂已注射 · 自家马本场速度爆发 +30%");
+          renderRaceTools();
+        }
+      };
+      box.appendChild(b);
+    } else if(state.doped){
+      const b = document.createElement("button");
+      b.className = "rt-btn dope-btn doped";
+      b.textContent = "药 · 已生效";
+      box.appendChild(b);
+    }
   }
 
   /* Canvas */
@@ -222,7 +304,8 @@ const RaceModule = (()=>{
       state.raceHorses.push(genRandomHorse(poolIdx[pi++], slot++, state.cupMode));
     }
     state.selected=null; state.bet=0; state.phase="betting";
-    renderTop(); renderMyPick(); renderHorses(); renderBetBar();
+    state.rumor=null; state.doped=false;
+    renderTop(); renderMyPick(); renderHorses(); renderBetBar(); renderRaceTools();
     $("trackOverlay").style.display="flex";
     $("raceTag").textContent = state.cupMode ? "★ CUP RACE ★" : "SELECT YOUR HORSE";
     $("raceTag").classList.toggle("cup", state.cupMode);
@@ -253,6 +336,17 @@ const RaceModule = (()=>{
     $("raceTag").textContent = state.cupMode ? "★ LIVE CUP ★" : "★ LIVE ★";
     state.phase="racing";
     state.raceHorses.forEach(h=>{ h.pos=0; h.finished=false; h.finishOrder=null; });
+    /* 兴奋剂：自家马本场强化 */
+    if(state.doped){
+      state.raceHorses.forEach(h=>{
+        if(h.isMine){ h.speed*=1.3; h.burst=Math.min(0.45, h.burst*1.3); }
+      });
+    }
+    /* 内幕冠军（真实）：指名的马大幅提速，基本稳拿第一 */
+    if(state.rumor && state.rumor.type==="champ" && state.rumor.real){
+      const champ = state.raceHorses[state.rumor.horseIdx];
+      if(champ) champ.speed *= 1.55;
+    }
     let finishCount=0, lastT=performance.now();
     function frame(now){
       const dt=Math.min(50, now-lastT); lastT=now;
@@ -276,6 +370,13 @@ const RaceModule = (()=>{
 
   function finishRace(){
     state.phase="done";
+    /* 内幕冠军（真实）：结算时把指名的马提为第一，其余顺延 */
+    if(state.rumor && state.rumor.type==="champ" && state.rumor.real){
+      const champ = state.raceHorses[state.rumor.horseIdx];
+      const others = state.raceHorses.filter((_,i)=>i!==state.rumor.horseIdx)
+        .sort((a,b)=>a.finishOrder-b.finishOrder);
+      if(champ){ champ.finishOrder=1; others.forEach((h,i)=>{ h.finishOrder=i+2; }); }
+    }
     const sorted=[...state.raceHorses].sort((a,b)=>a.finishOrder-b.finishOrder);
     const winner=sorted[0];
     state.lastWinner=winner;

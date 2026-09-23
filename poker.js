@@ -26,6 +26,7 @@ const PokerModule = (()=>{
   let P = null;  // 当前手牌局状态
   let T = null;  // 锦标赛状态（null = 现金桌/未开赛）
   let vip = false;
+  let spyActive = false;  // 底牌透视镜（本会话内有效，离开扑克室重置）
   const cashBlinds = ()=> vip ? [VIP_SB,VIP_BB] : [SB,BB];
 
   /* ---------- 牌组 ---------- */
@@ -178,6 +179,7 @@ const PokerModule = (()=>{
       deck:newDeck(),community:[],players,pot:0,curBet:0,
       stage:"preflop",humanPending:false,mode,
       startCoins:GameState.coins,
+      showBots: spyActive,
     };
     // 保存本手开始前快照（锦标赛回滚用）
     if(T) T.savedChips={}; players.forEach(p=>{ if(T) T.savedChips[p.id]=p.chips; });
@@ -490,7 +492,7 @@ const PokerModule = (()=>{
           +(p.folded?"opacity:.4;":"");
         const cards=p.hand.length
           ? (p.folded ? '<span style="font-size:10px;color:var(--muted);">FOLD</span>'
-                     : (p.human||P.stage==="showdown") ? p.hand.map(c=>cardHTML(c,true)).join("")
+                     : (p.human||P.stage==="showdown"||P.showBots) ? p.hand.map(c=>cardHTML(c,true)).join("")
                      : cardBackHTML(true)+cardBackHTML(true))
           : '<span style="font-size:10px;color:var(--red);">OUT</span>';
         const hn=p.evaluated?HAND_NAMES[p.evaluated.cat]:"";
@@ -559,7 +561,7 @@ const PokerModule = (()=>{
       if(p.out){
         cardsHTML="";
       } else if(p.hand.length){
-        const reveal=p.human||P.stage==="showdown";
+        const reveal=p.human||P.stage==="showdown"||(P.showBots&&!p.human);
         if(p.folded) cardsHTML="";
         else if(reveal) cardsHTML=p.hand.map(c=>cardHTML(c,true)).join("");
         else cardsHTML=cardBackHTML(true)+cardBackHTML(true);
@@ -651,6 +653,7 @@ const PokerModule = (()=>{
         T.savedChips=null;
       }
       P=null;
+      spyActive = false;
       // 顶栏标题
       const h=document.querySelector("#view-poker .brand h1");
       if(h) h.textContent = vip ? "POKER VIP" : "POKER";
@@ -659,6 +662,31 @@ const PokerModule = (()=>{
       $("potVal").textContent="0";
       $("yourHand").innerHTML="";
       $("pokerLog").innerHTML="";
+      /* 底牌透视镜按钮（持有道具时显示） */
+      let spyBtn = $("btnSpy");
+      if(!spyBtn){
+        spyBtn = document.createElement("button");
+        spyBtn.id = "btnSpy";
+        spyBtn.className = "btn-primary";
+        spyBtn.style.cssText = "max-width:240px;background:#3a2a55;color:#ff9d5c;";
+        spyBtn.onclick = ()=>{
+          if(spyActive) return;
+          if(useCheat("spy", vip?"vip":"normal")){
+            spyActive = true;
+            toast("底牌透视已开启 · 对手底牌可见");
+            if(P) renderAll();
+          }
+          updateSpyBtn();
+        };
+        $("pokerIntro").appendChild(spyBtn);
+      }
+      function updateSpyBtn(){
+        const have = cheatCount("spy");
+        spyBtn.style.display = (spyActive||have>0) ? "block" : "none";
+        spyBtn.textContent = spyActive ? "透视已开启（本场）" : "透视镜 x"+have+" · 亮对手底牌";
+        spyBtn.disabled = spyActive;
+      }
+      updateSpyBtn();
       // intro 文案按锦标赛状态
       if(T&&!T.finished){
         const cfg=T.cfg||TOUR;

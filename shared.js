@@ -17,6 +17,12 @@ const GameState = {
   wins: 0,             // 累计通关次数
   bestPeak: 0,         // 历史最高身家（跨夜保留）
   runEnded: false,     // 本夜是否已结算
+  // 暗巷黑市 / 随机事件
+  cheats: {},          // 道具栏 id -> 数量（本夜有效）
+  wanted: 0,           // 本夜被抓次数（满 3 次黑市封杀）
+  blackout: false,     // 黑市是否已被封杀
+  debt: 0,             // 高利贷：剩余扣款局数
+  debtPer: 0,          // 高利贷：每局扣款额
 };
 
 /* 一夜通关：18:00 开始，次日 05:00 结束 */
@@ -49,6 +55,11 @@ function gsSave(){
       wins: GameState.wins,
       bestPeak: GameState.bestPeak,
       runEnded: GameState.runEnded,
+      cheats: GameState.cheats,
+      wanted: GameState.wanted,
+      blackout: GameState.blackout,
+      debt: GameState.debt,
+      debtPer: GameState.debtPer,
     }));
   }catch(e){}
 }
@@ -69,6 +80,11 @@ function gsLoad(){
     if(typeof d.wins === "number") GameState.wins = d.wins;
     if(typeof d.bestPeak === "number") GameState.bestPeak = d.bestPeak;
     if(typeof d.runEnded === "boolean") GameState.runEnded = d.runEnded;
+    if(d.cheats && typeof d.cheats === "object") GameState.cheats = d.cheats;
+    if(typeof d.wanted === "number") GameState.wanted = d.wanted;
+    if(typeof d.blackout === "boolean") GameState.blackout = d.blackout;
+    if(typeof d.debt === "number") GameState.debt = d.debt;
+    if(typeof d.debtPer === "number") GameState.debtPer = d.debtPer;
     return true;
   }catch(e){ return false; }
 }
@@ -131,6 +147,17 @@ function advanceClock(mins){
   syncClock();
   renderGoalPanel();
   if(GameState.clock>=NIGHT_END){ endNight(false); return; }
+  /* 高利贷分期扣款（事件系统登记） */
+  if(GameState.debt>0 && GameState.debtPer>0){
+    const pay = Math.min(GameState.coins, GameState.debtPer);
+    GameState.coins -= pay;
+    GameState.debt--;
+    if(GameState.coins<=0) GameState.coins = 0;
+    syncCoinDisplays();
+    if(pay>0) toast("高利贷还款 -G"+pay+"（剩 "+GameState.debt+" 局）");
+  }
+  /* 结算后随机事件 */
+  if(typeof rollEvent === "function") rollEvent("post");
   gsSave();
 }
 
@@ -163,7 +190,7 @@ function endNight(manual){
   showNightResult(win, manual);
 }
 
-/* 开始新一夜：清空 run 层（金币/产业/VIP/时钟），保留 meta 层（马厩/图鉴/统计） */
+/* 开始新一夜：清空 run 层（金币/产业/VIP/时钟/黑市/事件），保留 meta 层（马厩/图鉴/统计） */
 function startNewNight(){
   GameState.nightNo++;
   GameState.coins = 1000;
@@ -171,7 +198,13 @@ function startNewNight(){
   GameState.vipUnlocked = false;
   GameState.clock = NIGHT_START;
   GameState.runEnded = false;
+  GameState.cheats = {};
+  GameState.wanted = 0;
+  GameState.blackout = false;
+  GameState.debt = 0;
+  GameState.debtPer = 0;
   hideNightResult();
+  if(typeof hideEventModal === "function") hideEventModal();
   gsSave();
   syncCoinDisplays();
   syncClock();
@@ -211,7 +244,7 @@ function buyProperty(id, confirm){
 }
 function syncCoinDisplays(){
   const v = GameState.coins;
-  ["mapCoins","mapCoinsVip","coinVal","pokerCoinVal","bjCoinVal","fbCoinVal"].forEach(id=>{
+  ["mapCoins","mapCoinsVip","coinVal","pokerCoinVal","bjCoinVal","fbCoinVal","bmCoinVal","bbCoinVal"].forEach(id=>{
     const el = $(id);
     if(el) el.textContent = v;
   });
@@ -220,7 +253,7 @@ function syncCoinDisplays(){
 /* ===================== 视图切换 ===================== */
 function showView(name, opts){
   opts = opts || {};
-  ["map","race","poker","blackjack","football","vip"].forEach(v=>{
+  ["map","race","poker","blackjack","football","vip","blackmarket","bobing"].forEach(v=>{
     $("view-"+v).classList.toggle("hidden", v!==name);
   });
   syncCoinDisplays();
@@ -241,6 +274,17 @@ function showView(name, opts){
   }
   if(name === "football" && typeof FootballModule !== "undefined"){
     FootballModule.enter();
+  }
+  if(name === "blackmarket" && typeof CheatModule !== "undefined"){
+    CheatModule.enter();
+  }
+  if(name === "bobing" && typeof BobingModule !== "undefined"){
+    BobingModule.enter(opts.vip ? "vip" : "normal");
+  }
+  /* 赌前随机事件（黑市与地图不触发） */
+  if(["race","poker","blackjack","football","bobing"].indexOf(name)>=0
+     && typeof rollEvent === "function"){
+    rollEvent("pre");
   }
 }
 
@@ -386,6 +430,8 @@ $("goVip").onclick = ()=>{
   if(!GameState.vipUnlocked){ toast("身家达到 G50,000 解锁 VIP 厅"); return; }
   showView("vip");
 };
+$("goBlackmarket").onclick = ()=>showView("blackmarket");
+$("goBobing").onclick = ()=>showView("bobing",{normal:true});
 $("goVipBlackjack").onclick = ()=>showView("blackjack",{vip:true});
 $("goVipPoker").onclick = ()=>showView("poker",{vip:true});
 $("vipBack").onclick = ()=>showView("map");
@@ -393,6 +439,8 @@ $("raceBack").onclick = ()=>showView("map");
 $("pokerBack").onclick = ()=>showView("map");
 $("bjBack").onclick = ()=>showView("map");
 $("fbBack").onclick = ()=>showView("map");
+$("bmBack").onclick = ()=>showView("map");
+$("bbBack").onclick = ()=>showView("map");
 
 /* 一夜通关按钮 */
 $("btnRetire").onclick = ()=>{

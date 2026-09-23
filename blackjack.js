@@ -11,6 +11,7 @@ const BlackjackModule = (()=>{
   let shoe=[];
   let bet=0, player=[], dealer=[], phase="bet", result=null, busy=false;
   let vip=false;
+  let canSwap=false;   // 换牌器：本局是否可用
   const CHIPS_NORMAL=[100,500,1000,5000];
   const CHIPS_VIP=[5000,10000,50000,100000];
   const chips=()=>vip?CHIPS_VIP:CHIPS_NORMAL;
@@ -48,6 +49,7 @@ const BlackjackModule = (()=>{
     if(mode==="vip") vip=true;
     else if(mode==="normal") vip=false;
     bet=0; player=[]; dealer=[]; phase="bet"; result=null; busy=false;
+    canSwap=false;
     // 顶栏标题区分桌台
     const h=document.querySelector("#view-blackjack .brand h1");
     if(h) h.textContent = vip ? "21 VIP" : "21";
@@ -69,9 +71,28 @@ const BlackjackModule = (()=>{
     player=[draw(),draw()];
     dealer=[draw(),draw()];
     phase="player"; result=null; busy=false;
+    canSwap = cheatCount("swap")>0;
     const pBJ=isBJ(player), dBJ=isBJ(dealer);
     if(pBJ || dBJ){ settle(pBJ,dBJ); return; }
     render();
+  }
+
+  /* 换牌器：换掉点数最小的一张（出千，可被抓） */
+  function doSwap(){
+    if(phase!=="player" || busy) return;
+    if(!canSwap || cheatCount("swap")<=0) return;
+    if(!useCheat("swap", vip?"vip":"normal")){ canSwap=false; renderControls(); return; }
+    canSwap=false;
+    let idx = player[0].rank<=player[1].rank ? 0 : 1;
+    const oldCard = player[idx];
+    player[idx] = draw();
+    render();
+    if(score(player)>21){
+      busy=true;
+      setTimeout(()=>settle(false,false,"bust"),480);
+    } else {
+      toast("换牌成功："+(BJ_RANK[oldCard.rank]||oldCard.rank)+" → "+(BJ_RANK[player[idx].rank]||player[idx].rank));
+    }
   }
 
   function rebet(){
@@ -221,15 +242,20 @@ const BlackjackModule = (()=>{
       $("bjDeal").onclick=deal;
     } else if(phase==="player"){
       const canDouble=!busy && player.length===2 && GameState.coins>0;
+      const swapHTML = (canSwap && cheatCount("swap")>0)
+        ? `<button class="pbtn pbtn-double" id="bjSwap" ${busy?"disabled":""}>SWAP<br>换牌</button>`
+        : "";
       box.innerHTML=`
         <div class="bj-actionrow">
           <button class="pbtn pbtn-hit" id="bjHit" ${busy?"disabled":""}>HIT<br>要牌</button>
           <button class="pbtn pbtn-stand" id="bjStand" ${busy?"disabled":""}>STAND<br>停牌</button>
           <button class="pbtn pbtn-double" id="bjDouble" ${canDouble?"":"disabled"}>DOUBLE<br>加倍</button>
+          ${swapHTML}
         </div>`;
       $("bjHit").onclick=hit;
       $("bjStand").onclick=stand;
       $("bjDouble").onclick=doubleDown;
+      if($("bjSwap")) $("bjSwap").onclick=doSwap;
     } else if(phase==="dealer"){
       box.innerHTML=`<button class="bj-deal" disabled>DEALER PLAYING…</button>`;
     } else {
