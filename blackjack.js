@@ -64,6 +64,7 @@ const BlackjackModule = (()=>{
 
   function deal(){
     if(phase!=="bet" || bet<=0) return;
+    if(!canSpend(5)){ toast("天亮前打不完这一局了"); render(); return; }
     addCoins(-bet);
     player=[draw(),draw()];
     dealer=[draw(),draw()];
@@ -155,6 +156,7 @@ const BlackjackModule = (()=>{
       toast("21点救助金 +G200");
     }
     businessTick();
+    advanceClock(5);
     render();
   }
 

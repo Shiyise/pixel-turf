@@ -114,6 +114,7 @@ const FootballModule = (()=>{
 
   function confirmBet(){
     const s=state.sel;
+    if(!canSpend(45)){ toast("天亮前看不完这场球了"); return; }
     if(!s){ toast("先选择一个盘口"); return; }
     if(state.amount>GameState.coins){ toast("金币不足"); return; }
     const f=state.fixtures[s.fid];
@@ -439,6 +440,7 @@ const FootballModule = (()=>{
     if(ret>0) addCoins(ret);
     if(GameState.coins===0){ addCoins(200); toast("救助金 +G200"); }
     businessTick();
+    advanceClock(45);
     gsSave();
     renderEnd(f,ret);
   }

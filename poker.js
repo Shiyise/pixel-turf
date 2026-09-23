@@ -144,6 +144,7 @@ const PokerModule = (()=>{
     if(T&&T.finished) T=null;
     const cfg=vip?TOUR_VIP:TOUR;
     if(!T){
+      if(!canSpend(10)){ toast("天亮前连一手都打不完，不能再报名"); return; }
       if(GameState.coins<cfg.buyin){ toast("金币不足，报名费 G"+cfg.buyin); return; }
       addCoins(-cfg.buyin);
       T={
@@ -172,6 +173,7 @@ const PokerModule = (()=>{
   }
 
   function beginHand(players, mode){
+    if(!canSpend(10)){ endNight(false); return; }
     P={
       deck:newDeck(),community:[],players,pot:0,curBet:0,
       stage:"preflop",humanPending:false,mode,
@@ -448,7 +450,9 @@ const PokerModule = (()=>{
         tourResult={place:null, over:false};
       }
     }
+    advanceClock(10);
     renderAll();
+    if(GameState.runEnded) return;
     showResultModal(pnl, tourResult);
   }
 

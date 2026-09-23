@@ -10,8 +10,19 @@ const GameState = {
   stable: [],
   // 置业 / VIP
   assets: {},          // 已购资产 id -> true
-  vipUnlocked: false,  // 历史净资产曾达到门槛即永久解锁
+  vipUnlocked: false,  // 本夜净资产曾达到门槛即解锁（新一夜重置）
+  // 一夜通关
+  clock: 0,            // 当前夜钟（分钟，18:00=1080）
+  nightNo: 1,          // 第几夜
+  wins: 0,             // 累计通关次数
+  bestPeak: 0,         // 历史最高身家（跨夜保留）
+  runEnded: false,     // 本夜是否已结算
 };
+
+/* 一夜通关：18:00 开始，次日 05:00 结束 */
+const NIGHT_START = 18*60;   // 1080
+const NIGHT_END   = 29*60;   // 1740（把次日时间按 24h 延展）
+const NIGHT_GOAL  = 100000;  // 天亮前金币达标即通关
 
 /* 可购置业：每在任意场所结算一局，所有生意按 income 发一次分红 */
 const PROPERTIES = [
@@ -33,6 +44,11 @@ function gsSave(){
       stable: GameState.stable,
       assets: GameState.assets,
       vipUnlocked: GameState.vipUnlocked,
+      clock: GameState.clock,
+      nightNo: GameState.nightNo,
+      wins: GameState.wins,
+      bestPeak: GameState.bestPeak,
+      runEnded: GameState.runEnded,
     }));
   }catch(e){}
 }
@@ -48,6 +64,11 @@ function gsLoad(){
     if(Array.isArray(d.stable)) GameState.stable = d.stable;
     if(d.assets && typeof d.assets === "object") GameState.assets = d.assets;
     if(typeof d.vipUnlocked === "boolean") GameState.vipUnlocked = d.vipUnlocked;
+    if(typeof d.clock === "number") GameState.clock = d.clock;
+    if(typeof d.nightNo === "number") GameState.nightNo = d.nightNo;
+    if(typeof d.wins === "number") GameState.wins = d.wins;
+    if(typeof d.bestPeak === "number") GameState.bestPeak = d.bestPeak;
+    if(typeof d.runEnded === "boolean") GameState.runEnded = d.runEnded;
     return true;
   }catch(e){ return false; }
 }
@@ -67,7 +88,8 @@ function toast(msg){
 function addCoins(n){
   GameState.coins += n;
   if(GameState.coins < 0) GameState.coins = 0;
-  // 净资产历史峰值达门槛：永久解锁 VIP 厅
+  if(GameState.coins > GameState.bestPeak) GameState.bestPeak = GameState.coins;
+  // 本夜净资产峰值达门槛：解锁 VIP 厅（新一夜重新锁）
   if(n > 0 && !GameState.vipUnlocked && GameState.coins >= VIP_THRESHOLD){
     GameState.vipUnlocked = true;
     setTimeout(()=>toast("身家破 G50,000 · VIP 厅已解锁"), 300);
@@ -86,6 +108,92 @@ function businessTick(){
     addCoins(inc);
     setTimeout(()=>toast(cnt+" 处生意分红 +G"+inc.toLocaleString()), 2000);
   }
+}
+
+/* ===================== 一夜通关：时钟 / 结算 / 重开 ===================== */
+function fmtClock(m){
+  const h = Math.floor(m/60)%24, mm = m%60;
+  return String(h).padStart(2,"0")+":"+String(mm).padStart(2,"0");
+}
+function nightLeft(){ return NIGHT_END-GameState.clock; }
+function canSpend(mins){ return !GameState.runEnded && GameState.clock+mins<=NIGHT_END; }
+
+/* 顶栏时钟：同步所有 .night-clock */
+function syncClock(){
+  const txt = fmtClock(GameState.clock);
+  document.querySelectorAll(".night-clock").forEach(el=>{ el.textContent = txt; });
+}
+
+/* 一局结束推进时间；到 05:00 结算一夜 */
+function advanceClock(mins){
+  if(GameState.runEnded) return;
+  GameState.clock = Math.min(NIGHT_END, GameState.clock+mins);
+  syncClock();
+  renderGoalPanel();
+  if(GameState.clock>=NIGHT_END){ endNight(false); return; }
+  gsSave();
+}
+
+/* 地图"今晚目标"面板 */
+function renderGoalPanel(){
+  const coins = GameState.coins;
+  const pct = Math.max(0, Math.min(100, Math.floor(coins/NIGHT_GOAL*100)));
+  const bar = $("goalBarFill"); if(bar) bar.style.width = pct+"%";
+  const pctEl = $("goalPct"); if(pctEl) pctEl.textContent = pct+"%";
+  const nowEl = $("goalNow"); if(nowEl) nowEl.textContent = "G"+coins.toLocaleString();
+  const ltEl = $("goalLeftTime"); if(ltEl) ltEl.textContent = fmtClock(GameState.clock)+" · 距天亮 "+fmtClock(nightLeft());
+  const metaEl = $("goalMeta"); if(metaEl) metaEl.textContent = "第 "+GameState.nightNo+" 夜 · 已通关 "+GameState.wins+" 次 · 最高身家 G"+GameState.bestPeak.toLocaleString();
+  const retire = $("btnRetire");
+  if(retire){
+    const ready = coins>=NIGHT_GOAL;
+    retire.disabled = !ready;
+    retire.classList.toggle("ready", ready);
+    retire.textContent = ready ? "功成身退 · 锁定通关" : "尚未达标 G100,000";
+  }
+}
+
+/* 一夜结算 */
+function endNight(manual){
+  if(GameState.runEnded) return;
+  GameState.runEnded = true;
+  const win = GameState.coins>=NIGHT_GOAL;
+  if(win) GameState.wins++;
+  if(GameState.coins>GameState.bestPeak) GameState.bestPeak = GameState.coins;
+  gsSave();
+  showNightResult(win, manual);
+}
+
+/* 开始新一夜：清空 run 层（金币/产业/VIP/时钟），保留 meta 层（马厩/图鉴/统计） */
+function startNewNight(){
+  GameState.nightNo++;
+  GameState.coins = 1000;
+  GameState.assets = {};
+  GameState.vipUnlocked = false;
+  GameState.clock = NIGHT_START;
+  GameState.runEnded = false;
+  hideNightResult();
+  gsSave();
+  syncCoinDisplays();
+  syncClock();
+  showView("map");
+  toast("第 "+GameState.nightNo+" 夜开始 · 本金 G1,000");
+}
+
+/* 结算弹窗 */
+function showNightResult(win, manual){
+  const ov = $("nightResult");
+  ov.classList.add("show");
+  ov.classList.toggle("win", win);
+  ov.classList.toggle("lose", !win);
+  $("nrTitle").textContent = win ? "一夜通关！" : "天亮了";
+  $("nrSub").textContent = win
+    ? (manual ? "你在日出前功成身退" : "你撑到了最后，身家达标")
+    : "未能在 05:00 前赚到 G100,000";
+  $("nrCoins").textContent = "最终身家 G"+GameState.coins.toLocaleString();
+  $("nrMeta").textContent = "第 "+GameState.nightNo+" 夜 · 累计通关 "+GameState.wins+" 次 · 历史最高 G"+GameState.bestPeak.toLocaleString();
+}
+function hideNightResult(){
+  $("nightResult").classList.remove("show","win","lose");
 }
 
 /* 置业购买（两段确认由 UI 传入 confirm=true 完成） */
@@ -116,9 +224,11 @@ function showView(name, opts){
     $("view-"+v).classList.toggle("hidden", v!==name);
   });
   syncCoinDisplays();
+  syncClock();
   if(name === "map"){
     drawMapHorse();
     renderMapProperty();
+    renderGoalPanel();
   }
   if(name === "race" && typeof RaceModule !== "undefined"){
     RaceModule.enter();
@@ -252,6 +362,8 @@ function drawMapHorse(){
 
 /* ===================== 启动 ===================== */
 gsLoad();
+/* 新档 / 旧档迁移：补合法夜钟 */
+if(typeof GameState.clock!=="number" || GameState.clock<NIGHT_START) GameState.clock=NIGHT_START;
 /* 新档送一匹赛马 */
 if(!GameState.stable || GameState.stable.length === 0){
   GameState.stable = [{
@@ -263,6 +375,8 @@ if(!GameState.stable || GameState.stable.length === 0){
 }
 syncCoinDisplays();
 showView("map");
+/* 上次停在结算弹窗：恢复它 */
+if(GameState.runEnded){ showNightResult(GameState.coins>=NIGHT_GOAL, false); }
 
 $("goRace").onclick = ()=>showView("race");
 $("goPoker").onclick = ()=>showView("poker",{normal:true});
@@ -279,3 +393,10 @@ $("raceBack").onclick = ()=>showView("map");
 $("pokerBack").onclick = ()=>showView("map");
 $("bjBack").onclick = ()=>showView("map");
 $("fbBack").onclick = ()=>showView("map");
+
+/* 一夜通关按钮 */
+$("btnRetire").onclick = ()=>{
+  if(GameState.coins>=NIGHT_GOAL) endNight(true);
+  else toast("身家达到 G100,000 才能功成身退");
+};
+$("btnNewNight").onclick = ()=>startNewNight();

@@ -621,6 +621,69 @@
     border:2px dashed var(--panel-2);padding:12px;
   }
 
+  /* ========== 夜钟（顶栏） ========== */
+  .topbar .night-clock{color:#7ad8ff;font-size:11px;}
+
+  /* ========== 地图：今晚目标面板 ========== */
+  .goal-panel{
+    max-width:720px;margin:0 auto 22px;background:var(--panel);
+    border:4px solid #000;box-shadow:5px 5px 0 #000;padding:14px 16px;
+  }
+  .goal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap;}
+  .goal-title{font-family:"Press Start 2P",monospace;font-size:11px;color:var(--yellow);}
+  .goal-clock{
+    font-family:"Press Start 2P",monospace;font-size:12px;color:#7ad8ff;
+    background:#0a0b14;border:2px solid #000;padding:5px 8px;
+  }
+  .goal-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px;flex-wrap:wrap;gap:6px;}
+  .goal-target{font-size:12px;color:var(--muted);}
+  .goal-now{font-family:"Press Start 2P",monospace;font-size:14px;color:var(--yellow);}
+  .goal-pct{font-family:"Press Start 2P",monospace;font-size:11px;color:var(--green);}
+  .goal-bar{height:16px;background:#0a0b14;border:2px solid #000;overflow:hidden;}
+  .goal-bar-fill{height:100%;width:0;transition:width .2s;
+    background:repeating-linear-gradient(90deg,var(--green) 0 6px,#2d8a00 6px 12px);}
+  .goal-sub{font-size:10px;color:var(--muted);margin-top:8px;}
+  .goal-meta{font-size:10px;color:var(--muted);margin-top:5px;}
+  .btn-retire{
+    width:100%;margin-top:10px;height:42px;cursor:pointer;
+    background:var(--panel-2);color:var(--muted);border:3px solid #000;
+    font-family:"Press Start 2P",monospace;font-size:9px;
+  }
+  .btn-retire.ready{
+    background:var(--yellow);color:#000;box-shadow:3px 3px 0 #000;cursor:pointer;
+    animation:retireblink .8s steps(2) infinite;
+  }
+  @keyframes retireblink{50%{opacity:.6;}}
+
+  /* ========== 一夜结算弹窗 ========== */
+  .night-result{
+    position:fixed;inset:0;z-index:200;display:none;
+    align-items:center;justify-content:center;padding:18px;
+    background:rgba(5,8,20,.92);
+  }
+  .night-result.show{display:flex;}
+  .night-card{
+    width:100%;max-width:420px;text-align:center;padding:24px 20px;
+    border:4px solid #000;box-shadow:6px 6px 0 #000;
+  }
+  .night-result.win .night-card{background:linear-gradient(180deg,#3a2e0a,#241d08);border-color:var(--yellow);}
+  .night-result.lose .night-card{background:linear-gradient(180deg,#20243a,#161827);}
+  .nr-sun{width:46px;height:46px;margin:0 auto 12px;border:3px solid #000;}
+  .night-result.win .nr-sun{background:var(--yellow);box-shadow:0 0 22px rgba(255,216,0,.8);border-radius:50%;}
+  .night-result.lose .nr-sun{background:#3a4a6a;border-radius:50%;}
+  .night-card h2{font-family:"Press Start 2P",monospace;font-size:18px;margin-bottom:10px;}
+  .night-result.win h2{color:var(--yellow);}
+  .night-result.lose h2{color:#9fb0d0;}
+  .nr-sub{font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:14px;}
+  .nr-coins{font-family:"Press Start 2P",monospace;font-size:14px;color:var(--green);margin-bottom:10px;}
+  .night-result.lose .nr-coins{color:#ff8a9a;}
+  .nr-meta{font-size:10px;color:var(--muted);line-height:1.7;margin-bottom:18px;}
+  .nr-btn{
+    width:100%;height:48px;background:var(--yellow);color:#000;border:3px solid #000;
+    cursor:pointer;font-family:"Press Start 2P",monospace;font-size:11px;box-shadow:3px 3px 0 #000;
+  }
+  .nr-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000;}
+
   .toast{
     position:fixed;left:50%;bottom:90px;transform:translateX(-50%);
     background:var(--bg-2);border:3px solid var(--yellow);
@@ -663,6 +726,23 @@
     <h1>PIXEL TURF</h1>
     <p>选择你今晚要去的地方</p>
   </div>
+
+  <div class="goal-panel">
+    <div class="goal-head">
+      <span class="goal-title">TONIGHT · 今晚目标</span>
+      <span class="goal-clock night-clock">18:00</span>
+    </div>
+    <div class="goal-row">
+      <span class="goal-target">目标 G100,000</span>
+      <span class="goal-now" id="goalNow">G0</span>
+      <span class="goal-pct" id="goalPct">0%</span>
+    </div>
+    <div class="goal-bar"><div class="goal-bar-fill" id="goalBarFill"></div></div>
+    <div class="goal-sub"><span id="goalLeftTime">18:00 · 距天亮 11:00</span></div>
+    <div class="goal-meta" id="goalMeta"></div>
+    <button class="btn-retire" id="btnRetire" disabled>尚未达标 G100,000</button>
+  </div>
+
   <div class="map-grid">
     <button class="place race" id="goRace">
       <div class="art">
@@ -741,6 +821,7 @@
       <h1 style="margin-left:6px;color:var(--yellow);text-shadow:2px 2px 0 #000;">VIP</h1>
     </div>
     <div class="stats">
+      <div class="stat"><span class="lbl">时间</span><span class="val night-clock">18:00</span></div>
       <div class="stat"><span class="lbl">金币</span><span class="val gold" id="mapCoinsVip">0</span></div>
     </div>
   </header>
@@ -779,6 +860,7 @@
       <h1 style="margin-left:6px;">RACE</h1>
     </div>
     <div class="stats">
+      <div class="stat"><span class="lbl">时间</span><span class="val night-clock">18:00</span></div>
       <div class="stat"><span class="lbl">金币</span><span class="val gold" id="coinVal">0</span></div>
       <div class="stat"><span class="lbl">连胜</span><span class="val" id="streakVal">0</span></div>
       <button class="btn-icon" id="btnStable">ST</button>
@@ -830,6 +912,7 @@
       <h1 style="margin-left:6px;color:var(--purple);text-shadow:2px 2px 0 #000;">POKER</h1>
     </div>
     <div class="stats">
+      <div class="stat"><span class="lbl">时间</span><span class="val night-clock">18:00</span></div>
       <div class="stat"><span class="lbl">金币</span><span class="val gold" id="pokerCoinVal">0</span></div>
     </div>
   </header>
@@ -884,6 +967,7 @@
       <h1 style="margin-left:6px;color:var(--red);text-shadow:2px 2px 0 #000;">21</h1>
     </div>
     <div class="stats">
+      <div class="stat"><span class="lbl">时间</span><span class="val night-clock">18:00</span></div>
       <div class="stat"><span class="lbl">金币</span><span class="val gold" id="bjCoinVal">0</span></div>
     </div>
   </header>
@@ -918,6 +1002,7 @@
       <h1 style="margin-left:6px;color:#2ed878;text-shadow:2px 2px 0 #000;">GOAL</h1>
     </div>
     <div class="stats">
+      <div class="stat"><span class="lbl">时间</span><span class="val night-clock">18:00</span></div>
       <div class="stat"><span class="lbl">金币</span><span class="val gold" id="fbCoinVal">0</span></div>
     </div>
   </header>
@@ -1017,12 +1102,24 @@
   </div>
 </div>
 
+<!-- ============ 一夜结算 ============ -->
+<div class="night-result" id="nightResult">
+  <div class="night-card">
+    <div class="nr-sun" id="nrSun"></div>
+    <h2 id="nrTitle">天亮了</h2>
+    <p class="nr-sub" id="nrSub"></p>
+    <div class="nr-coins" id="nrCoins"></div>
+    <div class="nr-meta" id="nrMeta"></div>
+    <button class="nr-btn" id="btnNewNight">开始新的一夜</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
-<script src="shared.js?v=10"></script>
-<script src="race.js?v=10"></script>
-<script src="poker.js?v=10"></script>
-<script src="blackjack.js?v=10"></script>
-<script src="football.js?v=10"></script>
+<script src="shared.js?v=11"></script>
+<script src="race.js?v=11"></script>
+<script src="poker.js?v=11"></script>
+<script src="blackjack.js?v=11"></script>
+<script src="football.js?v=11"></script>
 </body>
 </html>

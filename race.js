@@ -231,6 +231,7 @@ const RaceModule = (()=>{
   }
 
   function startRace(){
+    if(!canSpend(state.cupMode?30:20)){ toast("天亮前跑不完这场了"); return; }
     if(state.selected===null || state.bet<=0 || state.bet>GameState.coins){
       toast("请先选马并设定金额"); return;
     }
@@ -320,6 +321,7 @@ const RaceModule = (()=>{
       setTimeout(()=>toast("BUST! +200"), 800);
     }
     businessTick();
+    advanceClock(state.cupMode?30:20);
     GameState.raceNo += 1;
     gsSave(); renderTop();
 
@@ -361,7 +363,7 @@ const RaceModule = (()=>{
         toast("签约成功: "+HORSE_POOL[winner.id].name);
       };
     }
-    $("resultModal").classList.remove("hidden");
+    if(!GameState.runEnded) $("resultModal").classList.remove("hidden");
   }
 
   /* 马厩 */
