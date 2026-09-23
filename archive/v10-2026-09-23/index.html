@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<!--
+     PIXEL TURF v1.0 (resource tag v=10)
+     archived: 2026-09-23
+     commit: d4c1686 Add property business and VIP high-roller lounge
+     scope: race(bet/stable/train/breed/fatigue/cup/dex/sell)
+            poker(cash/SNG/side-pot), blackjack(ALL-IN/3:2)
+            football(20 teams/11v11/3 markets/pixel live)
+            property(5 businesses/per-settle dividend), VIP lounge(VIP BJ/VIP poker/high SNG)
+     READ-ONLY snapshot before next changes - do not develop here.
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PIXEL TURF · 像素赌场</title>
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Press+Start+2P&family=Noto+Sans+SC:wght@400;700&display=swap">
+<style>
+  :root{
+    --bg:#1a1c2c; --bg-2:#22243a;
+    --panel:#2f324a; --panel-2:#3a3d5c;
+    --border:#000; --line:#151725;
+    --text:#f4f4f4; --muted:#8a8fa8;
+    --yellow:#ffd800; --red:#ff004d; --green:#38b000; --purple:#b26bff;
+    --felt:#1a5c2a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:"Noto Sans SC",monospace;
+    overflow:hidden;user-select:none;touch-action:manipulation;
+    background-image:repeating-linear-gradient(0deg, rgba(0,0,0,.15) 0 1px, transparent 1px 3px);
+  }
+  button{font-family:inherit;}
+
+  /* ========== 通用顶栏 ========== */
+  .topbar{
+    height:56px;display:flex;align-items:center;justify-content:space-between;
+    padding:0 14px;background:var(--bg-2);border-bottom:3px solid var(--border);
+  }
+  .brand h1{
+    font-family:"Press Start 2P",monospace;font-size:14px;color:var(--yellow);
+    text-shadow:2px 2px 0 var(--red);
+  }
+  .brand small{font-size:10px;color:var(--muted);letter-spacing:2px;margin-left:8px;}
+  .stats{display:flex;align-items:center;gap:10px;}
+  .stat{display:flex;flex-direction:column;align-items:flex-end;line-height:1.2;}
+  .stat .lbl{font-size:9px;color:var(--muted);}
+  .stat .val{font-family:"Press Start 2P",monospace;font-size:13px;}
+  .stat .val.gold{color:var(--yellow);}
+  .btn-icon{
+    background:var(--panel);border:3px solid var(--border);color:var(--text);
+    min-width:42px;height:42px;padding:0 8px;cursor:pointer;
+    font-family:"Press Start 2P",monospace;font-size:10px;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:3px 3px 0 #000;
+  }
+  .btn-icon:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000;}
+
+  .view{position:absolute;inset:0;display:flex;flex-direction:column;}
+  .hidden{display:none !important;}
+
+  /* ========== 地图 ========== */
+  #view-map{
+    padding:20px;overflow-y:auto;
+    background:
+      radial-gradient(circle at 20% 15%, rgba(178,107,255,.08), transparent 40%),
+      radial-gradient(circle at 80% 85%, rgba(56,176,0,.08), transparent 40%);
+  }
+  .map-head{text-align:center;margin:10px 0 24px;}
+  .map-head h1{
+    font-family:"Press Start 2P",monospace;font-size:22px;color:var(--yellow);
+    text-shadow:3px 3px 0 var(--red);margin-bottom:10px;
+  }
+  .map-head p{font-size:12px;color:var(--muted);letter-spacing:2px;}
+  .map-grid{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+    gap:18px;max-width:720px;margin:0 auto;
+  }
+  .place{
+    background:var(--panel);border:4px solid var(--border);
+    box-shadow:6px 6px 0 #000;cursor:pointer;
+    padding:0;overflow:hidden;text-align:left;
+    transition:transform .08s;
+  }
+  .place:active{transform:translate(3px,3px);box-shadow:3px 3px 0 #000;}
+  .place .art{
+    height:130px;display:flex;align-items:center;justify-content:center;
+    position:relative;overflow:hidden;
+  }
+  .place.race .art{background:linear-gradient(180deg,#0a0b14 0%,#1a3d1a 100%);}
+  .place.poker .art{background:linear-gradient(180deg,#1a0f24 0%,#2d1a45 100%);}
+  .place .meta{padding:14px 16px;background:var(--bg-2);border-top:3px solid var(--border);}
+  .place .meta h2{
+    font-family:"Press Start 2P",monospace;font-size:13px;margin-bottom:6px;
+  }
+  .place.race .meta h2{color:var(--green);}
+  .place.poker .meta h2{color:var(--purple);}
+  .place .meta p{font-size:12px;color:var(--muted);line-height:1.6;}
+  .map-foot{
+    text-align:center;margin-top:24px;font-size:11px;color:var(--muted);line-height:1.8;
+  }
+  /* 像素马地图图标 */
+  .px-horse{image-rendering:pixelated;}
+  /* 扑克牌花地图标 */
+  .suits{font-size:40px;letter-spacing:6px;line-height:1;}
+  .suits .s-red{color:var(--red);}
+  .suits .s-white{color:#eee;}
+
+  /* ========== 赛马 ========== */
+  .track-wrap{
+    position:relative;background:#0a0b14;border-bottom:3px solid var(--border);overflow:hidden;
+  }
+  canvas{display:block;width:100%;image-rendering:pixelated;}
+  .track-overlay{
+    position:absolute;inset:0;pointer-events:none;
+    display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;
+  }
+  .countdown{
+    font-family:"Press Start 2P",monospace;font-size:56px;color:var(--yellow);
+    text-shadow:4px 4px 0 var(--red);
+  }
+  .race-tag{font-family:"Press Start 2P",monospace;font-size:10px;letter-spacing:3px;}
+  .race-tag.cup{color:var(--purple);}
+
+  .panel{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+  .betting-head{
+    padding:8px 14px;display:flex;justify-content:space-between;align-items:center;
+    flex-wrap:wrap;gap:8px;
+  }
+  .betting-head h2{font-family:"Press Start 2P",monospace;font-size:11px;}
+  .my-pick{
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    padding:6px 10px;background:var(--bg-2);border:2px solid var(--border);font-size:12px;
+  }
+  .my-pick label{color:var(--muted);}
+  .my-pick select{
+    background:var(--panel);color:var(--text);border:2px solid var(--border);
+    padding:4px 6px;font-family:inherit;font-size:12px;max-width:130px;
+  }
+  .btn-cup{
+    background:var(--purple);color:#fff;border:2px solid #000;
+    padding:4px 8px;cursor:pointer;
+    font-family:"Press Start 2P",monospace;font-size:8px;
+  }
+  .btn-cup.active{background:var(--yellow);color:#000;}
+  .btn-cup:disabled{opacity:.4;cursor:not-allowed;}
+
+  .horse-list{
+    flex:1;overflow-y:auto;padding:6px 10px 10px;
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));
+    gap:8px;align-content:start;
+  }
+  .horse-card{
+    background:var(--panel);border:3px solid var(--border);padding:8px 10px;
+    cursor:pointer;box-shadow:3px 3px 0 #000;position:relative;
+  }
+  .horse-card:hover{background:var(--panel-2);}
+  .horse-card.mine{background:#2a3d2a;border-color:var(--green);}
+  .horse-card.mine::before{
+    content:"MY";position:absolute;top:-10px;left:8px;
+    background:var(--green);color:#000;
+    font-family:"Press Start 2P",monospace;font-size:8px;
+    padding:2px 5px;border:2px solid #000;
+  }
+  .horse-card.cup-horse{border-color:var(--purple);}
+  .horse-card.selected{
+    background:#4a3d1a;border-color:var(--yellow);
+    box-shadow:3px 3px 0 #000, inset 0 0 0 2px var(--yellow);
+  }
+  .horse-card .top{display:flex;align-items:center;gap:8px;}
+  .num-badge{
+    width:26px;height:26px;display:flex;align-items:center;justify-content:center;
+    font-family:"Press Start 2P",monospace;font-size:11px;color:#fff;
+    border:2px solid #000;flex-shrink:0;
+  }
+  .horse-card .name{font-weight:700;font-size:14px;flex:1;line-height:1.1;}
+  .horse-card .en{font-size:9px;color:var(--muted);display:block;}
+  .horse-card .odds{font-family:"Press Start 2P",monospace;color:var(--yellow);font-size:12px;}
+  .horse-card .attrs{margin-top:6px;display:flex;flex-direction:column;gap:3px;}
+  .attr-row{display:flex;align-items:center;gap:5px;font-size:9px;color:var(--muted);}
+  .attr-row .lbl{width:28px;}
+  .attr-row .bar{flex:1;height:6px;background:#0a0b14;border:1px solid #000;overflow:hidden;}
+  .attr-row .fill{height:100%;background:var(--yellow);}
+  .horse-card .rarity{
+    position:absolute;top:6px;right:6px;
+    font-family:"Press Start 2P",monospace;font-size:8px;color:var(--red);
+  }
+  .bet-bar{
+    border-top:3px solid var(--border);background:var(--bg-2);
+    padding:8px 12px;display:flex;align-items:center;gap:8px;
+  }
+  .bet-info{flex:1;min-width:0;}
+  .bet-info .who{font-size:11px;color:var(--muted);}
+  .bet-info .who b{color:var(--text);font-size:13px;}
+  .bet-info .amt{font-family:"Press Start 2P",monospace;font-size:18px;color:var(--yellow);margin-top:2px;}
+  .chips{display:flex;gap:6px;}
+  .chip{
+    background:var(--panel);border:3px solid var(--border);color:var(--text);
+    min-width:48px;height:42px;padding:0 8px;cursor:pointer;
+    font-family:"Press Start 2P",monospace;font-size:10px;box-shadow:2px 2px 0 #000;
+  }
+  .chip:active{transform:translate(2px,2px);box-shadow:0 0 0 #000;}
+  .btn-go{
+    background:var(--yellow);color:#1a1a1a;border:3px solid var(--border);
+    height:48px;padding:0 18px;cursor:pointer;
+    font-family:"Press Start 2P",monospace;font-size:13px;box-shadow:3px 3px 0 #000;
+  }
+  .btn-go:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000;}
+  .btn-go:disabled{opacity:.4;cursor:not-allowed;}
+
+  /* ========== 弹窗通用 ========== */
+  .modal-mask{
+    position:fixed;inset:0;background:rgba(0,0,0,.85);
+    display:flex;align-items:center;justify-content:center;
+    z-index:50;padding:16px;
+  }
+  .modal{
+    background:var(--panel);border:4px solid var(--border);
+    width:100%;max-width:460px;max-height:86vh;overflow-y:auto;
+    padding:18px;box-shadow:6px 6px 0 #000;
+  }
+  .modal h2{
+    font-family:"Press Start 2P",monospace;font-size:14px;color:var(--yellow);
+    text-align:center;margin-bottom:6px;
+  }
+  .modal .sub{text-align:center;font-size:10px;color:var(--muted);margin-bottom:12px;letter-spacing:2px;}
+  .result-row{
+    display:flex;justify-content:space-between;padding:8px 4px;
+    border-bottom:2px dashed var(--line);font-size:13px;
+  }
+  .result-row .k{color:var(--muted);}
+  .result-row .v{font-weight:700;}
+  .result-row .v.pos{color:var(--green);}
+  .result-row .v.neg{color:var(--red);}
+  .winner-box{
+    text-align:center;padding:12px;margin:8px 0;
+    background:var(--bg-2);border:2px solid var(--border);
+  }
+  .winner-box .num{
+    display:inline-block;width:32px;height:32px;color:#fff;
+    line-height:32px;margin-right:8px;border:2px solid #000;vertical-align:middle;
+    font-family:"Press Start 2P",monospace;font-size:12px;
+  }
+  .winner-box .nm{font-family:"Press Start 2P",monospace;font-size:14px;vertical-align:middle;}
+  .winner-box .desc{font-size:11px;color:var(--muted);margin-top:6px;}
+  .modal .actions{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;}
+  .btn-primary{
+    flex:1;min-width:120px;background:var(--yellow);color:#1a1a1a;
+    border:3px solid var(--border);height:44px;cursor:pointer;
+    font-family:"Press Start 2P",monospace;font-size:11px;box-shadow:3px 3px 0 #000;
+  }
+  .btn-primary:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000;}
+  .btn-ghost{
+    flex:1;min-width:120px;background:transparent;color:var(--text);
+    border:3px solid var(--border);height:44px;cursor:pointer;
+    font-family:"Press Start 2P",monospace;font-size:11px;box-shadow:3px 3px 0 #000;
+  }
+  .btn-ghost:disabled{opacity:.4;}
+
+  .stable-list{display:flex;flex-direction:column;gap:8px;margin-top:6px;}
+  .stable-item{background:var(--bg-2);border:2px solid var(--border);padding:8px 10px;}
+  .stable-row{display:flex;align-items:center;gap:10px;}
+  .stable-item .sw{width:32px;height:32px;border:2px solid #000;flex-shrink:0;}
+  .stable-item .info{flex:1;min-width:0;}
+  .stable-item .nm{font-weight:700;font-size:13px;}
+  .stable-item .lv{font-size:10px;color:var(--muted);}
+  .stable-item .exp-bar{height:4px;background:#000;margin-top:3px;}
+  .stable-item .exp-fill{height:100%;background:var(--green);}
+  .stable-item .fatigue-row{display:flex;align-items:center;gap:6px;margin-top:4px;font-size:9px;color:var(--muted);}
+  .stable-item .fatigue-bar{flex:1;height:4px;background:#000;}
+  .stable-item .fatigue-fill{height:100%;background:var(--red);}
+  .train-btns{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;}
+  .train-btn{
+    background:var(--panel);border:2px solid var(--border);color:var(--text);
+    padding:4px 6px;cursor:pointer;font-family:"Press Start 2P",monospace;font-size:8px;
+  }
+  .train-btn.sell-btn{border-color:var(--red);color:var(--red);}
+  .train-btn.sell-btn.confirming{
+    background:var(--red);color:#fff;animation:sellblink .5s steps(2) infinite;
+  }
+  @keyframes sellblink{50%{opacity:.55;}}
+  .stable-empty{text-align:center;padding:20px;color:var(--muted);font-size:12px;}
+  .breed-form{display:flex;flex-direction:column;gap:10px;margin:10px 0;}
+  .breed-form label{font-size:11px;color:var(--muted);}
+  .breed-form select{
+    background:var(--panel);color:var(--text);border:2px solid #000;
+    padding:6px;font-size:13px;width:100%;
+  }
+  .breed-preview{
+    background:var(--bg-2);border:2px dashed var(--purple);
+    padding:10px;text-align:center;font-size:12px;color:var(--muted);
+  }
+  .dex-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px;}
+  .dex-cell{background:var(--bg-2);border:2px solid var(--border);padding:8px 4px;text-align:center;}
+  .dex-cell .swatch{width:28px;height:28px;margin:0 auto 4px;border:2px solid #000;}
+  .dex-cell .n{font-size:11px;font-weight:700;}
+  .dex-cell .r{font-size:9px;color:var(--muted);}
+  .dex-cell.locked{opacity:.3;}
+  .dex-cell.locked .swatch{background:#222 !important;}
+
+  /* ========== 扑克 ========== */
+  #view-poker .topbar{background:#241a33;}
+  .poker-room{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+  .table-area{
+    flex:1;position:relative;overflow:hidden;
+    background:radial-gradient(ellipse at center, #2a1a40 0%, #120a1e 80%);
+  }
+  .felt{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:min(92%, 720px);height:62%;
+    background:radial-gradient(ellipse at center, #1e7a35 0%, #0d4d1c 80%);
+    border:4px solid #000;
+    border-radius:50%/42%;
+    box-shadow:inset 0 0 40px rgba(0,0,0,.5), 0 6px 0 #000;
+  }
+  .community{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-60%);
+    display:flex;gap:6px;
+  }
+  .pot-box{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,34px);
+    text-align:center;
+  }
+  .pot-box .pot-lbl{font-size:9px;color:#9fd8a8;letter-spacing:2px;}
+  .pot-box .pot-val{
+    font-family:"Press Start 2P",monospace;font-size:14px;color:var(--yellow);margin-top:3px;
+  }
+  .stage-tag{
+    position:absolute;left:50%;top:12px;transform:translateX(-50%);
+    font-family:"Press Start 2P",monospace;font-size:9px;color:#9fd8a8;letter-spacing:2px;
+  }
+  .seat{
+    position:absolute;width:120px;
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+  }
+  .seat .seat-cards{display:flex;gap:3px;min-height:52px;}
+  .seat .seat-info{
+    background:var(--panel);border:2px solid #000;padding:4px 8px;
+    text-align:center;min-width:104px;
+  }
+  .seat.active .seat-info{border-color:var(--yellow);box-shadow:0 0 0 2px var(--yellow);}
+  .seat.folded{opacity:.35;}
+  .seat.winner .seat-info{border-color:var(--green);box-shadow:0 0 0 2px var(--green);}
+  .seat .seat-name{font-size:11px;font-weight:700;}
+  .seat .seat-chips{font-family:"Press Start 2P",monospace;font-size:9px;color:var(--yellow);margin-top:2px;}
+  .seat .seat-bet{
+    font-family:"Press Start 2P",monospace;font-size:9px;color:var(--green);margin-top:2px;
+  }
+  .seat .seat-tag{font-size:9px;color:var(--red);}
+  .seat-0{bottom:8px;left:50%;transform:translateX(-50%);}
+  .seat-1{top:8px;left:50%;transform:translateX(-50%);}
+  .seat-2{top:50%;left:8px;transform:translateY(-50%);}
+  .seat-3{top:50%;right:8px;transform:translateY(-50%);}
+
+  .playing-card{
+    width:40px;height:54px;background:#f4f4f4;border:2px solid #000;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    font-weight:700;line-height:1;position:relative;
+  }
+  .playing-card .rk{font-size:13px;font-family:"Press Start 2P",monospace;}
+  .playing-card .st{font-size:14px;margin-top:2px;}
+  .playing-card.red{color:var(--red);}
+  .playing-card.dark{color:#111;}
+  .playing-card.back{
+    background:repeating-linear-gradient(45deg,#3a2a66 0 4px,#2a1a4a 4px 8px);
+  }
+  .playing-card.back::after{
+    content:"";position:absolute;inset:4px;border:2px solid var(--purple);
+  }
+  .playing-card.small{width:30px;height:42px;}
+  .playing-card.small .rk{font-size:10px;}
+  .playing-card.small .st{font-size:11px;}
+
+  .poker-controls{
+    background:#241a33;border-top:3px solid #000;
+    padding:10px 12px;display:flex;flex-direction:column;gap:8px;
+  }
+  .your-hand{display:flex;align-items:center;justify-content:center;gap:6px;min-height:58px;}
+  .your-hand .hand-name{
+    margin-left:10px;font-family:"Press Start 2P",monospace;font-size:10px;color:var(--yellow);
+  }
+  .action-row{display:flex;gap:8px;}
+  .pbtn{
+    flex:1;height:46px;border:3px solid #000;cursor:pointer;
+    font-family:"Press Start 2P",monospace;font-size:11px;box-shadow:3px 3px 0 #000;
+  }
+  .pbtn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000;}
+  .pbtn:disabled{opacity:.4;cursor:not-allowed;}
+  .pbtn-fold{background:var(--red);color:#fff;}
+  .pbtn-call{background:var(--yellow);color:#000;}
+  .pbtn-raise{background:var(--green);color:#000;}
+  .raise-row{display:none;gap:8px;}
+  .raise-row.open{display:flex;}
+  .poker-log{
+    position:absolute;left:10px;bottom:10px;max-width:45%;
+    font-size:10px;color:#b8a8d8;line-height:1.6;
+  }
+  .poker-intro{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    flex-direction:column;gap:14px;background:rgba(10,6,18,.85);z-index:5;
+  }
+  .poker-intro h2{
+    font-family:"Press Start 2P",monospace;font-size:16px;color:var(--purple);
+    text-shadow:2px 2px 0 #000;
+  }
+  .poker-intro p{font-size:12px;color:var(--muted);text-align:center;line-height:1.8;}
+
+  /* ========== 21 点 ========== */
+  .place.bj .art{background:linear-gradient(180deg,#240a14 0%,#52101f 100%);}
+  .place.bj .meta h2{color:var(--red);}
+  .art21{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;}
+  .art21 .mini-cards{font-size:20px;letter-spacing:4px;}
+  .art21 .mini-cards .s-red{color:var(--red);}
+  .art21 .mini-cards .s-white{color:#eee;}
+  .art21 .big21{
+    font-family:"Press Start 2P",monospace;font-size:40px;color:var(--yellow);
+    text-shadow:3px 3px 0 #000;line-height:1;
+  }
+
+  #view-blackjack .topbar{background:#2a1018;}
+  .bj-room{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+  .bj-table{
+    flex:1;position:relative;overflow:hidden;
+    background:radial-gradient(ellipse at center,#5a1626 0%,#260a12 80%);
+    display:flex;flex-direction:column;justify-content:space-between;
+    padding:16px 12px;
+  }
+  .bj-side{display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .bj-label{
+    font-family:"Press Start 2P",monospace;font-size:10px;letter-spacing:2px;color:#e8a8b8;
+    display:flex;gap:10px;align-items:center;
+  }
+  .bj-score{
+    background:var(--bg-2);border:2px solid #000;color:var(--yellow);
+    font-family:"Press Start 2P",monospace;font-size:10px;padding:3px 7px;min-width:26px;text-align:center;
+  }
+  .bj-hand{display:flex;gap:5px;min-height:58px;justify-content:center;flex-wrap:wrap;}
+  .bj-center{display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .bj-banner{
+    font-family:"Press Start 2P",monospace;font-size:15px;text-align:center;min-height:22px;
+    text-shadow:2px 2px 0 #000;letter-spacing:1px;
+  }
+  .bj-banner.win{color:var(--green);}
+  .bj-banner.lose{color:var(--red);}
+  .bj-banner.bj{color:var(--yellow);}
+  .bj-banner.push{color:var(--muted);}
+  .bj-betinfo{font-family:"Press Start 2P",monospace;font-size:9px;color:#f0c8d0;text-align:center;line-height:1.9;}
+
+  .bj-controls{background:#2a1018;border-top:3px solid #000;padding:10px 12px;display:flex;flex-direction:column;gap:8px;}
+  .bj-chiprow{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;}
+  .bj-chiprow .chip{min-width:58px;}
+  .chip.allin{background:var(--red);color:#fff;}
+  .chip.clear{background:transparent;color:var(--muted);}
+  .bj-actionrow{display:flex;gap:8px;}
+  .pbtn-hit{background:var(--green);color:#000;}
+  .pbtn-stand{background:var(--red);color:#fff;}
+  .pbtn-double{background:var(--yellow);color:#000;}
+  .bj-deal{
+    height:48px;background:var(--yellow);color:#000;border:3px solid #000;cursor:pointer;
+    font-family:"Press Start 2P",monospace;font-size:13px;box-shadow:3px 3px 0 #000;
+  }
+  .bj-deal:disabled{opacity:.4;cursor:not-allowed;}
+  .bj-deal:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000;}
+
+  /* ========== 足球赌球 ========== */
+  .place.fb .art{background:linear-gradient(180deg,#0a2412 0%,#1a5c2a 100%);}
+  .place.fb .meta h2{color:#2ed878;}
+  .art-fb{display:flex;flex-direction:column;align-items:center;gap:7px;}
+  .art-ball{
+    width:44px;height:44px;border-radius:50%;background:#f4f4f4;border:3px solid #000;position:relative;
+    box-shadow:inset -5px -5px 0 rgba(0,0,0,.18);
+  }
+  .art-ball::before{
+    content:"";position:absolute;left:50%;top:50%;width:13px;height:13px;background:#111;
+    transform:translate(-50%,-50%);
+  }
+  .art-ball::after{
+    content:"";position:absolute;inset:0;border-radius:50%;
+    background:
+      radial-gradient(circle at 16% 22%,#111 3.5px,transparent 4.5px),
+      radial-gradient(circle at 84% 22%,#111 3.5px,transparent 4.5px),
+      radial-gradient(circle at 18% 82%,#111 3.5px,transparent 4.5px),
+      radial-gradient(circle at 82% 82%,#111 3.5px,transparent 4.5px);
+  }
+  .art-goal{font-family:"Press Start 2P",monospace;font-size:15px;color:#2ed878;text-shadow:2px 2px 0 #000;}
+
+  #view-football .topbar{background:#0d2f16;}
+  .fb-pitch-wrap{position:relative;background:#0a1f10;border-bottom:3px solid #000;}
+  #fbPitch{display:block;width:100%;image-rendering:pixelated;}
+  .fb-overlay{position:absolute;inset:0;pointer-events:none;display:flex;flex-direction:column;align-items:center;}
+  .fb-scoreboard{
+    margin-top:8px;background:rgba(0,0,0,.72);border:2px solid #000;color:#fff;
+    font-family:"Press Start 2P",monospace;font-size:11px;padding:6px 12px;letter-spacing:1px;
+  }
+  .fb-banner{margin:auto auto 12px;font-family:"Press Start 2P",monospace;font-size:20px;text-shadow:3px 3px 0 #000;min-height:26px;text-align:center;padding:0 10px;}
+  .fb-banner .goal{color:#ffe14a;}
+  .fb-banner .win{color:#2ed878;font-size:12px;}
+  .fb-banner .lose{color:var(--red);font-size:12px;}
+
+  .fb-head{padding:8px 12px;display:flex;justify-content:space-between;align-items:center;}
+  .fb-head h2{font-family:"Press Start 2P",monospace;font-size:10px;color:#2ed878;}
+  .fb-fixtures{flex:1;overflow-y:auto;padding:2px 10px 8px;display:flex;flex-direction:column;gap:7px;}
+  .fx-card{background:var(--panel);border:3px solid #000;padding:7px 9px;box-shadow:2px 2px 0 #000;}
+  .fx-card.played{opacity:.85;}
+  .fx-row{display:flex;align-items:center;gap:6px;}
+  .fx-team{flex:1;display:flex;align-items:center;gap:5px;font-size:12px;min-width:0;}
+  .fx-team.away{justify-content:flex-end;text-align:right;}
+  .fx-team small{color:var(--muted);font-size:9px;}
+  .fx-lg{
+    font-size:8px;color:#0a0f1a;background:var(--muted);
+    padding:1px 3px;border:1px solid #000;flex-shrink:0;line-height:1.3;
+  }
+  .fx-dot{width:10px;height:10px;border:2px solid #000;flex-shrink:0;}
+  .fx-vs{font-family:"Press Start 2P",monospace;font-size:9px;color:var(--muted);}
+  .fx-final{font-family:"Press Start 2P",monospace;font-size:14px;color:var(--yellow);padding:0 6px;}
+  .fx-result{margin-top:5px;text-align:center;font-family:"Press Start 2P",monospace;font-size:8px;}
+  .fx-result.win{color:var(--green);} .fx-result.lose{color:var(--muted);}
+  .fx-odds-row{display:flex;gap:5px;margin-top:7px;}
+  .fx-odd{
+    flex:1;background:var(--bg-2);border:2px solid #000;color:var(--text);padding:5px 2px;cursor:pointer;
+    font-size:10px;display:flex;flex-direction:column;gap:2px;align-items:center;
+  }
+  .fx-odd b{font-family:"Press Start 2P",monospace;font-size:9px;color:var(--yellow);}
+  .fx-odd.sm{flex-direction:row;gap:4px;}
+  .fx-odd.sel{background:var(--yellow);color:#000;}
+  .fx-odd.sel b{color:#000;}
+  .fx-more{flex:0 0 52px;background:var(--panel-2);border:2px solid #000;color:var(--muted);font-size:9px;cursor:pointer;}
+  .fx-extra{display:none;gap:5px;margin-top:6px;align-items:center;}
+  .fx-extra.open{display:flex;}
+  .fx-cs{flex:1;background:var(--bg-2);color:var(--text);border:2px solid #000;padding:5px;font-size:11px;}
+
+  .fb-betbar{border-top:3px solid #000;background:var(--bg-2);padding:8px 10px;min-height:64px;display:flex;flex-direction:column;justify-content:center;}
+  .fb-hint{font-size:11px;color:var(--muted);text-align:center;line-height:1.6;}
+  .fb-pick{font-size:12px;text-align:center;margin-bottom:6px;}
+  .fb-betrow{display:flex;gap:8px;align-items:center;}
+  .fchips{display:flex;gap:5px;flex:1;}
+  .fchip{
+    background:var(--panel);border:3px solid #000;color:var(--text);min-width:44px;height:40px;padding:0 6px;
+    cursor:pointer;font-family:"Press Start 2P",monospace;font-size:10px;box-shadow:2px 2px 0 #000;
+  }
+  .fchip.sel{background:var(--yellow);color:#000;}
+  .fb-confirm{
+    background:var(--green);color:#000;border:3px solid #000;height:46px;padding:0 14px;cursor:pointer;
+    font-family:"Press Start 2P",monospace;font-size:11px;box-shadow:3px 3px 0 #000;
+  }
+  .fb-confirm.gray{background:var(--panel-2);color:var(--text);}
+  .fb-endrow{display:flex;gap:8px;}
+  .fb-endrow .fb-confirm{flex:1;}
+
+  /* ========== 地图：VIP 厅卡片 / 股东角标 ========== */
+  .place{position:relative;}
+  .place.vip .art{background:linear-gradient(180deg,#1d1408 0%,#3d2a0a 100%);}
+  .place.vip .meta h2{color:var(--yellow);}
+  .place.vip.locked{filter:grayscale(.85) brightness(.75);}
+  .vip-art{font-family:"Press Start 2P",monospace;font-size:34px;color:var(--yellow);
+    text-shadow:3px 3px 0 #000,0 0 14px rgba(255,216,0,.5);}
+  .owned-tag{
+    position:absolute;top:8px;right:8px;z-index:2;
+    background:var(--yellow);color:#000;border:2px solid #000;
+    font-family:"Press Start 2P",monospace;font-size:8px;padding:3px 5px;
+  }
+
+  /* ========== 地图：地产区 ========== */
+  .property-block{max-width:720px;margin:26px auto 0;}
+  .property-head{
+    display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px;
+  }
+  .property-head h3{
+    font-family:"Press Start 2P",monospace;font-size:12px;color:var(--yellow);
+    text-shadow:2px 2px 0 #000;
+  }
+  .property-head .prop-income{font-size:10px;color:var(--muted);text-align:right;line-height:1.5;}
+  .prop-list{display:flex;flex-direction:column;gap:8px;}
+  .prop-row{
+    display:flex;align-items:center;gap:10px;
+    background:var(--panel);border:3px solid #000;box-shadow:3px 3px 0 #000;padding:8px 10px;
+  }
+  .prop-row.owned{background:#243a24;}
+  .prop-icon{
+    width:38px;height:38px;flex-shrink:0;background:var(--panel-2);border:3px solid #000;
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;font-weight:700;color:var(--yellow);
+  }
+  .prop-row.owned .prop-icon{background:var(--green);color:#000;}
+  .prop-info{flex:1;min-width:0;}
+  .prop-name{font-size:13px;font-weight:700;}
+  .prop-badge{
+    font-size:8px;background:var(--green);color:#000;border:1px solid #000;
+    padding:1px 4px;margin-left:4px;vertical-align:1px;
+  }
+  .prop-desc{font-size:10px;color:var(--muted);margin-top:2px;}
+  .prop-btn{
+    flex-shrink:0;background:var(--yellow);color:#000;border:3px solid #000;
+    height:40px;padding:0 14px;cursor:pointer;font-family:"Press Start 2P",monospace;
+    font-size:9px;box-shadow:2px 2px 0 #000;
+  }
+  .prop-btn.confirm{background:var(--red);color:#fff;}
+  .prop-btn:disabled{background:var(--panel-2);color:var(--muted);box-shadow:none;cursor:default;}
+  .prop-btn:active:not(:disabled){transform:translate(2px,2px);box-shadow:0 0 0 #000;}
+
+  /* ========== VIP 厅视图 ========== */
+  #view-vip{
+    overflow-y:auto;
+    background:
+      radial-gradient(circle at 50% 20%, rgba(255,216,0,.1), transparent 55%),
+      linear-gradient(180deg,#171126 0%,#0d0a16 100%);
+  }
+  .vip-hall{max-width:720px;margin:0 auto;padding:22px 18px 40px;}
+  .vip-title{text-align:center;margin-bottom:8px;}
+  .vip-title h1{
+    font-family:"Press Start 2P",monospace;font-size:22px;color:var(--yellow);
+    text-shadow:3px 3px 0 #000,0 0 18px rgba(255,216,0,.45);
+  }
+  .vip-title p{font-size:11px;color:var(--muted);margin-top:10px;letter-spacing:1px;line-height:1.7;}
+  .vip-tables{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-top:26px;}
+  .vip-table{
+    text-align:left;cursor:pointer;padding:0;overflow:hidden;
+    background:linear-gradient(180deg,#2a2140,#1b1530);
+    border:4px solid var(--yellow);box-shadow:6px 6px 0 #000;
+  }
+  .vip-table:active{transform:translate(3px,3px);box-shadow:3px 3px 0 #000;}
+  .vip-table .vt-art{height:110px;display:flex;align-items:center;justify-content:center;
+    font-family:"Press Start 2P",monospace;font-size:30px;color:var(--yellow);text-shadow:3px 3px 0 #000;}
+  .vip-table .vt-meta{padding:14px 16px;background:rgba(0,0,0,.35);border-top:3px solid #000;}
+  .vip-table .vt-meta h2{font-family:"Press Start 2P",monospace;font-size:12px;color:var(--yellow);margin-bottom:8px;}
+  .vip-table .vt-meta p{font-size:11px;color:var(--text);line-height:1.8;}
+  .vip-note{
+    margin-top:24px;text-align:center;font-size:10px;color:var(--muted);line-height:1.8;
+    border:2px dashed var(--panel-2);padding:12px;
+  }
+
+  .toast{
+    position:fixed;left:50%;bottom:90px;transform:translateX(-50%);
+    background:var(--bg-2);border:3px solid var(--yellow);
+    color:var(--text);padding:10px 16px;z-index:100;
+    font-family:"Press Start 2P",monospace;font-size:10px;
+    opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap;
+  }
+  .toast.show{opacity:1;}
+
+  @media (max-width:640px){
+    .horse-list{grid-template-columns:repeat(2,1fr);}
+    .bet-info .amt{font-size:14px;}
+    .chip{min-width:42px;padding:0 6px;font-size:9px;}
+    .train-btn{font-size:7px;padding:3px 4px;}
+    .brand small{display:none;}
+    .seat{width:92px;}
+    .seat .seat-info{min-width:86px;padding:3px 5px;}
+    .seat .seat-name{font-size:10px;}
+    .playing-card{width:32px;height:44px;}
+    .playing-card .rk{font-size:11px;}
+    .playing-card .st{font-size:12px;}
+    .community{gap:4px;}
+    .pbtn{font-size:9px;}
+    .fchip{min-width:38px;padding:0 4px;font-size:8px;}
+    .fx-odd{font-size:9px;padding:4px 1px;}
+    .fx-team{font-size:11px;}
+    /* 窄屏：三名对手全部保留，排列在牌桌远端左/中/右 */
+    .seat-1{top:6px;}
+    .seat-2{top:6px;left:4px;transform:none;}
+    .seat-3{top:6px;right:4px;transform:none;}
+    .seat-0{bottom:6px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= 地图 ================= -->
+<div class="view" id="view-map">
+  <div class="map-head">
+    <h1>PIXEL TURF</h1>
+    <p>选择你今晚要去的地方</p>
+  </div>
+  <div class="map-grid">
+    <button class="place race" id="goRace">
+      <div class="art">
+        <canvas id="mapHorse" width="180" height="110"></canvas>
+      </div>
+      <div class="meta">
+        <h2>RACE · 赛马场</h2>
+        <p>下注赛马、签约名马、训练配种、参加杯赛。12 匹传奇赛马等你解锁图鉴。</p>
+      </div>
+    </button>
+    <button class="place poker" id="goPoker">
+      <div class="art">
+        <div class="suits">
+          <span class="s-white">♠</span><span class="s-red">♥</span><span class="s-red">♦</span><span class="s-white">♣</span>
+        </div>
+      </div>
+      <div class="meta">
+        <h2>POKER · 扑克室</h2>
+        <p>德州扑克，你对战 3 个 AI。现金桌随到随玩，或交 G500 报名 SNG 锦标赛争冠军 G1500。</p>
+      </div>
+    </button>
+    <button class="place bj" id="goBlackjack">
+      <div class="art">
+        <div class="art21">
+          <div class="mini-cards"><span class="s-white">A♠</span><span class="s-red">J♥</span></div>
+          <div class="big21">21</div>
+        </div>
+      </div>
+      <div class="meta">
+        <h2>21 · 黑杰克</h2>
+        <p>高注码专桌：100 起步、5000 一档，更可 ALL-IN 押上全部身家。黑杰克 3:2 赔率，速战速决。</p>
+      </div>
+    </button>
+    <button class="place fb" id="goFootball">
+      <div class="art">
+        <div class="art-fb">
+          <div class="art-ball"></div>
+          <div class="art-goal">GOAL</div>
+        </div>
+      </div>
+      <div class="meta">
+        <h2>GOAL · 赌球</h2>
+        <p>五大联赛 20 支豪门，11 人制对决，每轮 4 场。胜平负、大小球 2.5、精确比分三种盘口，看直播收米。</p>
+      </div>
+    </button>
+    <button class="place vip locked" id="goVip">
+      <div class="art">
+        <div class="vip-art">VIP</div>
+      </div>
+      <div class="meta">
+        <h2>VIP LOUNGE · 贵宾厅</h2>
+        <p class="vip-lock-text">锁定 · 身家达到 G50,000 解锁</p>
+      </div>
+    </button>
+  </div>
+
+  <div class="property-block">
+    <div class="property-head">
+      <h3>PROPERTY · 我的生意</h3>
+      <div class="prop-income" id="propIncome">还没有产业 · 赢钱后买下生意，每局自动分红</div>
+    </div>
+    <div class="prop-list" id="propList"></div>
+  </div>
+
+  <div class="map-foot">
+    <div>持有金币：<span id="mapCoins" style="color:var(--yellow);font-family:'Press Start 2P',monospace;">0</span></div>
+    <div style="margin-top:8px;">场所金币互通 · 生意每局分红 · 进度自动保存在浏览器</div>
+  </div>
+</div>
+
+<!-- ================= VIP 贵宾厅 ================= -->
+<div class="view hidden" id="view-vip">
+  <header class="topbar" style="background:#241d08;">
+    <div class="brand">
+      <button class="btn-icon" id="vipBack">← MAP</button>
+      <h1 style="margin-left:6px;color:var(--yellow);text-shadow:2px 2px 0 #000;">VIP</h1>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="lbl">金币</span><span class="val gold" id="mapCoinsVip">0</span></div>
+    </div>
+  </header>
+  <div class="vip-hall">
+    <div class="vip-title">
+      <h1>VIP LOUNGE</h1>
+      <p>只招待身家五位数以上的客人 · 这里的赌局以一当百</p>
+    </div>
+    <div class="vip-tables">
+      <button class="vip-table" id="goVipBlackjack">
+        <div class="vt-art">21</div>
+        <div class="vt-meta">
+          <h2>VIP 黑杰克</h2>
+          <p>筹码 5,000 / 10,000 / 50,000 / 100,000<br>黑杰克 3:2，照样可以 ALL-IN 押身家</p>
+        </div>
+      </button>
+      <button class="vip-table" id="goVipPoker">
+        <div class="vt-art">♠ ♥</div>
+        <div class="vt-meta">
+          <h2>VIP 德州扑克</h2>
+          <p>现金桌盲注 200/400，对手带五万上桌<br>高注 SNG：G5,000 报名，冠军 G15,000</p>
+        </div>
+      </button>
+    </div>
+    <div class="vip-note">
+      高注桌与普通厅共用同一个钱包，赢了回地图买产业，输光了回普通桌领救助金东山再起。
+    </div>
+  </div>
+</div>
+
+<!-- ================= 赛马场 ================= -->
+<div class="view hidden" id="view-race">
+  <header class="topbar">
+    <div class="brand">
+      <button class="btn-icon" id="raceBack">← MAP</button>
+      <h1 style="margin-left:6px;">RACE</h1>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="lbl">金币</span><span class="val gold" id="coinVal">0</span></div>
+      <div class="stat"><span class="lbl">连胜</span><span class="val" id="streakVal">0</span></div>
+      <button class="btn-icon" id="btnStable">ST</button>
+      <button class="btn-icon" id="btnDex">DX</button>
+    </div>
+  </header>
+
+  <main style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+    <div class="track-wrap">
+      <canvas id="track" height="260"></canvas>
+      <div class="track-overlay" id="trackOverlay">
+        <div class="race-tag" id="raceTag">SELECT YOUR HORSE</div>
+        <div class="countdown" id="countdown"></div>
+      </div>
+    </div>
+
+    <section class="panel">
+      <div class="betting-head">
+        <h2 id="raceTitle">— 第 1 场 —</h2>
+        <div class="my-pick">
+          <label>派出自家马</label>
+          <select id="myPick"><option value="-1">不派</option></select>
+          <button class="btn-cup" id="btnCup">CUP G300</button>
+        </div>
+      </div>
+      <div class="horse-list" id="horseList"></div>
+      <div class="bet-bar">
+        <div class="bet-info">
+          <div class="who" id="betWho">未选择下注马匹</div>
+          <div class="amt" id="betAmt">G 0</div>
+        </div>
+        <div class="chips">
+          <button class="chip" data-amt="10">10</button>
+          <button class="chip" data-amt="50">50</button>
+          <button class="chip" data-amt="100">100</button>
+          <button class="chip" data-amt="500">500</button>
+        </div>
+        <button class="btn-go" id="btnGo" disabled>RUN!</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ================= 扑克室 ================= -->
+<div class="view hidden" id="view-poker">
+  <header class="topbar">
+    <div class="brand">
+      <button class="btn-icon" id="pokerBack">← MAP</button>
+      <h1 style="margin-left:6px;color:var(--purple);text-shadow:2px 2px 0 #000;">POKER</h1>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="lbl">金币</span><span class="val gold" id="pokerCoinVal">0</span></div>
+    </div>
+  </header>
+
+  <div class="poker-room">
+    <div class="table-area">
+      <div class="felt"></div>
+      <div class="stage-tag" id="stageTag">TEXAS HOLD'EM · 10/20</div>
+      <div class="community" id="community"></div>
+      <div class="pot-box">
+        <div class="pot-lbl">POT</div>
+        <div class="pot-val" id="potVal">0</div>
+      </div>
+
+      <div class="seat seat-1" id="seat-1"></div>
+      <div class="seat seat-2" id="seat-2"></div>
+      <div class="seat seat-3" id="seat-3"></div>
+      <div class="seat seat-0" id="seat-0"></div>
+
+      <div class="poker-log" id="pokerLog"></div>
+
+      <div class="poker-intro" id="pokerIntro">
+        <h2>POKER ROOM</h2>
+        <p id="pokerIntroText">德州扑克 · 金币与赛马场互通<br>选择你要玩的模式</p>
+        <button class="btn-primary" id="btnDeal" style="max-width:240px;">CASH · 现金桌（盲注 10/20）</button>
+        <button class="btn-primary" id="btnTournament" style="max-width:240px;background:var(--purple);color:#fff;">SNG · 锦标赛（报名 G500）</button>
+      </div>
+    </div>
+
+    <div class="poker-controls">
+      <div class="your-hand" id="yourHand"></div>
+      <div class="action-row">
+        <button class="pbtn pbtn-fold" id="btnFold">FOLD<br>弃牌</button>
+        <button class="pbtn pbtn-call" id="btnCall">CALL</button>
+        <button class="pbtn pbtn-raise" id="btnRaise">RAISE</button>
+      </div>
+      <div class="raise-row" id="raiseRow">
+        <button class="pbtn pbtn-raise" data-raise="min">+1BB</button>
+        <button class="pbtn pbtn-raise" data-raise="pot">POT</button>
+        <button class="pbtn pbtn-raise" data-raise="all">ALL-IN</button>
+        <button class="pbtn pbtn-fold" id="btnRaiseCancel" style="flex:0 0 60px;">X</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= 21 点 ================= -->
+<div class="view hidden" id="view-blackjack">
+  <header class="topbar">
+    <div class="brand">
+      <button class="btn-icon" id="bjBack">← MAP</button>
+      <h1 style="margin-left:6px;color:var(--red);text-shadow:2px 2px 0 #000;">21</h1>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="lbl">金币</span><span class="val gold" id="bjCoinVal">0</span></div>
+    </div>
+  </header>
+
+  <div class="bj-room">
+    <div class="bj-table">
+      <div class="bj-side">
+        <div class="bj-label">DEALER <span class="bj-score" id="bjDealerScore">?</span></div>
+        <div class="bj-hand" id="bjDealerHand"></div>
+      </div>
+
+      <div class="bj-center">
+        <div class="bj-banner" id="bjBanner"></div>
+        <div class="bj-betinfo" id="bjBetInfo"></div>
+      </div>
+
+      <div class="bj-side">
+        <div class="bj-label">YOU <span class="bj-score" id="bjPlayerScore">0</span></div>
+        <div class="bj-hand" id="bjPlayerHand"></div>
+      </div>
+    </div>
+
+    <div class="bj-controls" id="bjControls"></div>
+  </div>
+</div>
+
+<!-- ================= 足球赌球 ================= -->
+<div class="view hidden" id="view-football">
+  <header class="topbar">
+    <div class="brand">
+      <button class="btn-icon" id="fbBack">← MAP</button>
+      <h1 style="margin-left:6px;color:#2ed878;text-shadow:2px 2px 0 #000;">GOAL</h1>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="lbl">金币</span><span class="val gold" id="fbCoinVal">0</span></div>
+    </div>
+  </header>
+
+  <main style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+    <div class="fb-pitch-wrap">
+      <canvas id="fbPitch" height="230"></canvas>
+      <div class="fb-overlay">
+        <div class="fb-scoreboard" id="fbScoreboard">SELECT A MATCH</div>
+        <div class="fb-banner" id="fbBanner"></div>
+      </div>
+    </div>
+    <div class="fb-head">
+      <h2 id="fbRoundTitle">第 1 轮</h2>
+      <button class="btn-cup" id="fbNextRound" style="background:#1f7a34;">下一轮</button>
+    </div>
+    <div class="fb-fixtures" id="fbFixtures"></div>
+    <div class="fb-betbar" id="fbBetbar"></div>
+  </main>
+</div>
+
+<!-- ============ 赛马：结算弹窗 ============ -->
+<div class="modal-mask hidden" id="resultModal">
+  <div class="modal">
+    <h2 id="rTitle">FINISH</h2>
+    <div class="sub" id="rSub">RACE OVER</div>
+    <div class="winner-box">
+      <span class="num" id="rWinnerNum">1</span>
+      <span class="nm" id="rWinnerName">—</span>
+      <div class="desc" id="rWinnerDesc"></div>
+    </div>
+    <div class="result-row"><span class="k">下注</span><span class="v" id="rBet">G 0</span></div>
+    <div class="result-row"><span class="k">赔率</span><span class="v" id="rOdds">× 0.0</span></div>
+    <div class="result-row"><span class="k">下注结算</span><span class="v" id="rPnl">+G 0</span></div>
+    <div class="result-row"><span class="k">当前金币</span><span class="v" id="rCoin">G 0</span></div>
+    <div class="actions">
+      <button class="btn-ghost" id="btnSignUp" disabled>签约冠军</button>
+      <button class="btn-primary" id="rAgain">NEXT</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 赛马：马厩 ============ -->
+<div class="modal-mask hidden" id="stableModal">
+  <div class="modal">
+    <h2>STABLE · 马厩</h2>
+    <div class="sub" id="stableCount">0 / 5</div>
+    <div class="stable-list" id="stableList"></div>
+    <div class="actions">
+      <button class="btn-ghost" id="btnBreed">配种 G800</button>
+      <button class="btn-primary" id="stableClose">CLOSE</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 赛马：配种 ============ -->
+<div class="modal-mask hidden" id="breedModal">
+  <div class="modal">
+    <h2>BREEDING</h2>
+    <div class="sub">两匹名马生下新的小马</div>
+    <div class="breed-form">
+      <div><label>父亲</label><select id="breedDad"></select></div>
+      <div><label>母亲</label><select id="breedMom"></select></div>
+    </div>
+    <div class="breed-preview" id="breedPreview">选好父母后点配种</div>
+    <div class="actions">
+      <button class="btn-ghost" id="breedCancel">BACK</button>
+      <button class="btn-primary" id="breedGo">BREED G800</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 赛马：图鉴 ============ -->
+<div class="modal-mask hidden" id="dexModal">
+  <div class="modal">
+    <h2>HORSE DEX</h2>
+    <div class="sub" id="dexCount">0 / 0</div>
+    <div class="dex-grid" id="dexGrid"></div>
+    <div class="actions">
+      <button class="btn-primary" id="dexClose">CLOSE</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 扑克：结算弹窗 ============ -->
+<div class="modal-mask hidden" id="pokerResultModal">
+  <div class="modal" style="max-width:400px;">
+    <h2 id="prTitle">HAND OVER</h2>
+    <div class="sub" id="prSub"></div>
+    <div id="prHands" style="display:flex;flex-direction:column;gap:8px;margin:10px 0;"></div>
+    <div class="result-row"><span class="k">本局盈亏</span><span class="v" id="prPnl">0</span></div>
+    <div class="result-row"><span class="k">当前金币</span><span class="v" id="prCoin">0</span></div>
+    <div class="actions">
+      <button class="btn-ghost" id="prMap">回地图</button>
+      <button class="btn-primary" id="prNext">下一局</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="shared.js?v=10"></script>
+<script src="race.js?v=10"></script>
+<script src="poker.js?v=10"></script>
+<script src="blackjack.js?v=10"></script>
+<script src="football.js?v=10"></script>
+</body>
+</html>

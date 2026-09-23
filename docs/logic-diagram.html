@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIXEL TURF · 逻辑架构图</title>
+<style>
+  :root{
+    --bg:#1a1c2c; --panel:#2f324a; --panel-2:#3a3d5c; --line:#151725;
+    --text:#f4f4f4; --muted:#8a8fa8; --yellow:#ffd800; --red:#ff004d;
+    --green:#38b000; --purple:#b26bff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:"Noto Sans SC",monospace;padding:22px 14px 40px;
+    background-image:repeating-linear-gradient(0deg, rgba(0,0,0,.15) 0 1px, transparent 1px 3px);
+  }
+  .wrap{max-width:1080px;margin:0 auto;}
+  h1{
+    font-size:22px;color:var(--yellow);text-align:center;
+    text-shadow:3px 3px 0 var(--red);margin-bottom:6px;letter-spacing:1px;
+  }
+  .sub{text-align:center;font-size:12px;color:var(--muted);margin-bottom:22px;letter-spacing:1px;}
+
+  .layer{margin-bottom:14px;}
+  .layer-tag{
+    display:inline-block;font-size:10px;letter-spacing:2px;color:#0a0b14;
+    background:var(--muted);border:2px solid #000;padding:3px 8px;margin-bottom:8px;
+  }
+  .nodes{display:flex;gap:10px;flex-wrap:wrap;}
+  .node{
+    flex:1;min-width:150px;background:var(--panel);border:3px solid #000;
+    box-shadow:4px 4px 0 #000;padding:10px 12px;
+  }
+  .node h3{font-size:13px;margin-bottom:6px;letter-spacing:.5px;}
+  .node ul{list-style:none;font-size:11px;color:var(--muted);line-height:1.75;}
+  .node.entry{background:#243a24;}
+  .node.entry h3{color:var(--green);}
+  .node.map{background:#3a3524;min-width:200px;}
+  .node.map h3{color:var(--yellow);}
+  .node.shared{background:#2a2440;}
+  .node.shared h3{color:var(--purple);}
+  .node.race h3{color:var(--green);}
+  .node.poker h3{color:var(--purple);}
+  .node.bj h3{color:var(--red);}
+  .node.fb h3{color:#2ed878;}
+  .node.vip{border-color:var(--yellow);background:#2e2818;}
+  .node.vip h3{color:var(--yellow);}
+  .node.store{background:#1f2233;}
+  .node.store h3{color:var(--muted);}
+
+  .arrow{
+    text-align:center;color:var(--yellow);font-size:18px;line-height:1;margin:2px 0;
+  }
+  .arrow .alabel{font-size:9px;color:var(--muted);letter-spacing:1px;margin-left:6px;}
+
+  /* 横向数据流条 */
+  .flowbar{
+    margin-top:18px;border:3px solid #000;background:var(--panel);
+    box-shadow:4px 4px 0 #000;padding:12px 14px;
+  }
+  .flowbar h3{font-size:12px;color:var(--yellow);margin-bottom:10px;letter-spacing:1px;}
+  .chain{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;}
+  .chip{
+    background:var(--panel-2);border:2px solid #000;padding:6px 9px;white-space:nowrap;
+  }
+  .chip.gold{background:var(--yellow);color:#000;font-weight:700;}
+  .chip.red{background:var(--red);color:#fff;}
+  .chip.green{background:var(--green);color:#000;}
+  .chip.purple{background:var(--purple);color:#000;}
+  .a{color:var(--yellow);font-size:15px;}
+
+  .legend{
+    margin-top:16px;display:flex;gap:14px;flex-wrap:wrap;justify-content:center;
+    font-size:10px;color:var(--muted);
+  }
+  .legend span{display:inline-flex;align-items:center;gap:5px;}
+  .dot{width:11px;height:11px;border:2px solid #000;display:inline-block;}
+
+  .foot{margin-top:20px;text-align:center;font-size:10px;color:var(--muted);line-height:1.8;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>PIXEL TURF 逻辑架构图</h1>
+  <div class="sub">纯前端 · 原生 HTML/CSS/JS · 无构建 · localStorage 存档 · 金币全局互通</div>
+
+  <!-- L0 入口 -->
+  <div class="layer">
+    <div class="layer-tag">L0 · 入口</div>
+    <div class="nodes">
+      <div class="node entry">
+        <h3>index.html（唯一入口）</h3>
+        <ul>
+          <li>· 全部视图结构 + 像素风 CSS</li>
+          <li>· 按顺序加载 5 个 JS 模块</li>
+          <li>· 启动即 gsLoad() → showView("map")</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="arrow">▼<span class="alabel">加载 / 读档</span></div>
+
+  <!-- L1 共享内核 -->
+  <div class="layer">
+    <div class="layer-tag">L1 · 共享内核 shared.js（横切所有场所）</div>
+    <div class="nodes">
+      <div class="node shared">
+        <h3>状态与存档</h3>
+        <ul>
+          <li>· GameState：金币 / 连胜 / 图鉴 / 马厩</li>
+          <li>· assets 已购产业、vipUnlocked</li>
+          <li>· gsSave / gsLoad（localStorage）</li>
+        </ul>
+      </div>
+      <div class="node shared">
+        <h3>金币与路由</h3>
+        <ul>
+          <li>· addCoins(n)：统一改钱 + 刷新显示</li>
+          <li>· showView(name,opts)：切视图 / 透传模式</li>
+          <li>· VIP 解锁检测（峰值 G50,000）</li>
+        </ul>
+      </div>
+      <div class="node shared">
+        <h3>置业分红</h3>
+        <ul>
+          <li>· PROPERTIES：5 处产业常量</li>
+          <li>· buyProperty：两段确认购买</li>
+          <li>· businessTick：每局结算发分红</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="arrow">▼<span class="alabel">showView 分发</span></div>
+
+  <!-- L2 地图 -->
+  <div class="layer">
+    <div class="layer-tag">L2 · 地图（场所选择）</div>
+    <div class="nodes">
+      <div class="node map">
+        <h3>MAP · 地图界面</h3>
+        <ul>
+          <li>· 5 张场所卡片 + 股东角标</li>
+          <li>· 地产区：购买 / 已拥有态 / 分红汇总</li>
+          <li>· VIP 卡：锁定灰阶 ↔ 解锁金色</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="arrow">▼<span class="alabel">点击卡片进入对应视图</span></div>
+
+  <!-- L3 四个场所 -->
+  <div class="layer">
+    <div class="layer-tag">L3 · 四个普通场所（金币互通）</div>
+    <div class="nodes">
+      <div class="node race">
+        <h3>RACE 赛马场 · race.js</h3>
+        <ul>
+          <li>· 8 马选马下注，按赔率结算</li>
+          <li>· 马厩 / 训练 / 卖马</li>
+          <li>· 配种 / 疲劳 / 周杯赛</li>
+          <li>· 12 名马图鉴</li>
+        </ul>
+      </div>
+      <div class="node poker">
+        <h3>POKER 扑克室 · poker.js</h3>
+        <ul>
+          <li>· 现金桌 10/20，3 个 AI</li>
+          <li>· 四轮下注 + 边池分层</li>
+          <li>· SNG：G500 报名 / T$1500</li>
+          <li>· 盲注 8 手升级，前二名分奖</li>
+        </ul>
+      </div>
+      <div class="node bj">
+        <h3>21 点 · blackjack.js</h3>
+        <ul>
+          <li>· 筹码 100~5000 + ALL-IN</li>
+          <li>· 4 副牌靴，庄家 17 停</li>
+          <li>· 黑杰克 3:2，加倍，和局退本</li>
+        </ul>
+      </div>
+      <div class="node fb">
+        <h3>GOAL 赌球 · football.js</h3>
+        <ul>
+          <li>· 五大联赛 20 队，每轮 4 场</li>
+          <li>· 1X2 / 大小球 2.5 / 精确比分</li>
+          <li>· Poisson 模型定赔率</li>
+          <li>· 11v11（4-4-2）像素直播</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIP 层 -->
+  <div class="layer" style="margin-top:16px;">
+    <div class="layer-tag" style="background:var(--yellow);">L4 · VIP 贵宾厅（身家 G50,000 解锁）</div>
+    <div class="nodes">
+      <div class="node vip">
+        <h3>VIP 黑杰克</h3>
+        <ul>
+          <li>· 筹码 5,000 / 10,000 / 50,000 / 100,000</li>
+          <li>· 规则同普通桌，可 ALL-IN</li>
+        </ul>
+      </div>
+      <div class="node vip">
+        <h3>VIP 德州现金桌</h3>
+        <ul>
+          <li>· 盲注 200/400，AI 各带 G50,000</li>
+          <li>· 入座门槛 G4,000，不发救助金</li>
+        </ul>
+      </div>
+      <div class="node vip">
+        <h3>VIP SNG 锦标赛</h3>
+        <ul>
+          <li>· G5,000 报名，T$15,000 起始</li>
+          <li>· 盲注 ×10，冠军 G15,000 / 亚军 G5,000</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 核心数据流：一局结算回路 -->
+  <div class="flowbar">
+    <h3>核心数据流 · 一局结算回路（任意场所通用）</h3>
+    <div class="chain">
+      <span class="chip">下注 / 开赛</span><span class="a">→</span>
+      <span class="chip red">扣注 addCoins(-bet)</span><span class="a">→</span>
+      <span class="chip">比赛 / 牌局进行</span><span class="a">→</span>
+      <span class="chip green">结算 赢则 addCoins(奖金)</span><span class="a">→</span>
+      <span class="chip gold">businessTick 产业分红</span><span class="a">→</span>
+      <span class="chip purple">破产则发救助金</span><span class="a">→</span>
+      <span class="chip">gsSave 存档</span>
+    </div>
+  </div>
+
+  <!-- 存档字段 -->
+  <div class="flowbar">
+    <h3>存档结构 · localStorage「pixelcasino1」</h3>
+    <div class="chain">
+      <span class="chip">coins 金币</span>
+      <span class="chip">streak 连胜</span>
+      <span class="chip">raceNo 场次</span>
+      <span class="chip">dex 图鉴</span>
+      <span class="chip">stable 马厩(等级/经验/疲劳/属性)</span>
+      <span class="chip gold">assets 已购产业</span>
+      <span class="chip gold">vipUnlocked VIP资格</span>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><i class="dot" style="background:var(--green)"></i>赛马</span>
+    <span><i class="dot" style="background:var(--purple)"></i>扑克</span>
+    <span><i class="dot" style="background:var(--red)"></i>21 点</span>
+    <span><i class="dot" style="background:#2ed878"></i>足球</span>
+    <span><i class="dot" style="background:var(--yellow)"></i>置业 / VIP</span>
+  </div>
+
+  <div class="foot">
+    箭头方向 = 加载与调用方向 · 所有场所只通过 shared.js 的 addCoins 操作金币，保证全局互通与单一数据源<br>
+    部署形态：本地 file:// 直开，或 GitHub Pages 公网访问（手机浏览器）
+  </div>
+</div>
+</body>
+</html>
