@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PIXEL TURF · 逻辑架构图</title>
+<title>PIXEL TURF · 逻辑架构图 v12</title>
 <style>
   :root{
     --bg:#1a1c2c; --panel:#2f324a; --panel-2:#3a3d5c; --line:#151725;
     --text:#f4f4f4; --muted:#8a8fa8; --yellow:#ffd800; --red:#ff004d;
-    --green:#38b000; --purple:#b26bff;
+    --green:#38b000; --purple:#b26bff; --orange:#ff9d5c;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{
@@ -45,10 +45,20 @@
   .node.poker h3{color:var(--purple);}
   .node.bj h3{color:var(--red);}
   .node.fb h3{color:#2ed878;}
+  .node.bm{background:#3a2a24;}
+  .node.bm h3{color:var(--orange);}
+  .node.bb{background:#2e3a3a;}
+  .node.bb h3{color:#7ad8ff;}
+  .node.ev{background:#3a3520;border-style:dashed;}
+  .node.ev h3{color:var(--yellow);}
   .node.vip{border-color:var(--yellow);background:#2e2818;}
   .node.vip h3{color:var(--yellow);}
   .node.store{background:#1f2233;}
   .node.store h3{color:var(--muted);}
+  .tag-new{
+    font-size:8px;background:var(--red);color:#fff;padding:1px 4px;
+    border:1px solid #000;margin-left:4px;vertical-align:middle;
+  }
 
   .arrow{
     text-align:center;color:var(--yellow);font-size:18px;line-height:1;margin:2px 0;
@@ -69,6 +79,7 @@
   .chip.red{background:var(--red);color:#fff;}
   .chip.green{background:var(--green);color:#000;}
   .chip.purple{background:var(--purple);color:#000;}
+  .chip.orange{background:var(--orange);color:#000;}
   .a{color:var(--yellow);font-size:15px;}
 
   .legend{
@@ -84,7 +95,7 @@
 <body>
 <div class="wrap">
   <h1>PIXEL TURF 逻辑架构图</h1>
-  <div class="sub">纯前端 · 原生 HTML/CSS/JS · 无构建 · localStorage 存档 · 金币全局互通</div>
+  <div class="sub">v12 · 纯前端 · 原生 HTML/CSS/JS · 无构建 · localStorage 存档 · 金币全局互通 · 一夜通关 G100k</div>
 
   <!-- L0 入口 -->
   <div class="layer">
@@ -93,8 +104,8 @@
       <div class="node entry">
         <h3>index.html（唯一入口）</h3>
         <ul>
-          <li>· 全部视图结构 + 像素风 CSS</li>
-          <li>· 按顺序加载 5 个 JS 模块</li>
+          <li>· 全部视图结构（地图 + 7 场所）+ 像素风 CSS</li>
+          <li>· 按顺序加载 8 个 JS 模块</li>
           <li>· 启动即 gsLoad() → showView("map")</li>
         </ul>
       </div>
@@ -110,24 +121,32 @@
         <h3>状态与存档</h3>
         <ul>
           <li>· GameState：金币 / 连胜 / 图鉴 / 马厩</li>
-          <li>· assets 已购产业、vipUnlocked</li>
+          <li>· assets 产业、vipUnlocked</li>
+          <li>· <b style="color:var(--orange)">cheats 道具 / wanted 通缉</b></li>
+          <li>· <b style="color:var(--orange)">blackout 封杀 / debt 债务</b></li>
+          <li>· <b style="color:#7ad8ff">clock 夜钟 / nightNo 夜数</b></li>
           <li>· gsSave / gsLoad（localStorage）</li>
         </ul>
       </div>
       <div class="node shared">
-        <h3>金币与路由</h3>
+        <h3>金币 / 路由 / 夜钟</h3>
         <ul>
           <li>· addCoins(n)：统一改钱 + 刷新显示</li>
           <li>· showView(name,opts)：切视图 / 透传模式</li>
+          <li>· <b style="color:#7ad8ff">advanceClock(min)：推夜钟</b></li>
+          <li>· <b style="color:#7ad8ff">→ 高利贷分期扣款</b></li>
+          <li>· <b style="color:#7ad8ff">→ rollEvent("post") 赌后事件</b></li>
           <li>· VIP 解锁检测（峰值 G50,000）</li>
         </ul>
       </div>
       <div class="node shared">
-        <h3>置业分红</h3>
+        <h3>置业分红 / 事件调度</h3>
         <ul>
           <li>· PROPERTIES：5 处产业常量</li>
           <li>· buyProperty：两段确认购买</li>
           <li>· businessTick：每局结算发分红</li>
+          <li>· <b style="color:var(--yellow)">进场所 → rollEvent("pre")</b></li>
+          <li>· <b style="color:var(--yellow)">startNewNight 清黑市/债务</b></li>
         </ul>
       </div>
     </div>
@@ -141,26 +160,29 @@
       <div class="node map">
         <h3>MAP · 地图界面</h3>
         <ul>
-          <li>· 5 张场所卡片 + 股东角标</li>
+          <li>· <b style="color:var(--yellow)">7 张场所卡片</b> + 股东角标</li>
           <li>· 地产区：购买 / 已拥有态 / 分红汇总</li>
           <li>· VIP 卡：锁定灰阶 ↔ 解锁金色</li>
+          <li>· 顶部"今晚目标"：夜钟 + G100k 进度</li>
         </ul>
       </div>
     </div>
   </div>
   <div class="arrow">▼<span class="alabel">点击卡片进入对应视图</span></div>
 
-  <!-- L3 四个场所 -->
+  <!-- L3 七个场所 -->
   <div class="layer">
-    <div class="layer-tag">L3 · 四个普通场所（金币互通）</div>
+    <div class="layer-tag">L3 · 七大场所（金币互通）</div>
     <div class="nodes">
       <div class="node race">
         <h3>RACE 赛马场 · race.js</h3>
         <ul>
           <li>· 8 马选马下注，按赔率结算</li>
-          <li>· 马厩 / 训练 / 卖马</li>
-          <li>· 配种 / 疲劳 / 周杯赛</li>
-          <li>· 12 名马图鉴</li>
+          <li>· 马厩 / 训练 / 卖马 / 配种</li>
+          <li>· 疲劳 / 周杯赛 / 名马图鉴</li>
+          <li>· <b style="color:var(--orange)">三档传闻 RUMORS</b></li>
+          <li>· <b style="color:var(--orange)">小报/悄悄话/内幕冠军</b></li>
+          <li>· <b style="color:var(--orange)">兴奋剂 dope：×1.3</b></li>
         </ul>
       </div>
       <div class="node poker">
@@ -170,6 +192,7 @@
           <li>· 四轮下注 + 边池分层</li>
           <li>· SNG：G500 报名 / T$1500</li>
           <li>· 盲注 8 手升级，前二名分奖</li>
+          <li>· <b style="color:var(--orange)">透视镜 spy：亮 bot 底牌</b></li>
         </ul>
       </div>
       <div class="node bj">
@@ -178,6 +201,7 @@
           <li>· 筹码 100~5000 + ALL-IN</li>
           <li>· 4 副牌靴，庄家 17 停</li>
           <li>· 黑杰克 3:2，加倍，和局退本</li>
+          <li>· <b style="color:var(--orange)">换牌器 swap：换最小牌</b></li>
         </ul>
       </div>
       <div class="node fb">
@@ -187,6 +211,74 @@
           <li>· 1X2 / 大小球 2.5 / 精确比分</li>
           <li>· Poisson 模型定赔率</li>
           <li>· 11v11（4-4-2）像素直播</li>
+          <li>· <b style="color:var(--orange)">评级 S/A/B/C 徽章</b></li>
+          <li>· <b style="color:var(--orange)">贿赂三档：小费/主裁/全队</b></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- L3b 黑市 + 博饼 -->
+  <div class="layer" style="margin-top:10px;">
+    <div class="layer-tag" style="background:var(--orange);">L3+ · 暗巷与博饼（v12 新增场所）</div>
+    <div class="nodes">
+      <div class="node bm">
+        <h3>BLACK MARKET 暗巷 · cheat.js</h3>
+        <ul>
+          <li>· CHEAT_ITEMS：5 种道具</li>
+          <li>· spy 透视镜 / swap 换牌器</li>
+          <li>· dope 兴奋剂 / dice 灌铅骰</li>
+          <li>· pardon 免罪金牌</li>
+          <li>· useCheat：消耗 → 判被抓</li>
+          <li>· caught：罚款 + wanted+1</li>
+          <li>· wanted ≥3 → blackout 封杀</li>
+        </ul>
+      </div>
+      <div class="node bb">
+        <h3>BOBING 博饼坊 · bobing.js</h3>
+        <ul>
+          <li>· 六骰掷一次定奖，5 分钟</li>
+          <li>· 一秀 1x → 状元 10x</li>
+          <li>· 插金花 30x / 罚黑输注</li>
+          <li>· 普通桌 100/500/1000</li>
+          <li>· VIP 桌 5,000/10,000</li>
+          <li>· <b style="color:var(--orange)">灌铅：P(4)=1/4</b></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- L3c 随机事件（横切） -->
+  <div class="layer" style="margin-top:10px;">
+    <div class="layer-tag" style="background:var(--yellow);color:#000;">L3× · 随机事件 events.js（横切所有场所）</div>
+    <div class="nodes">
+      <div class="node ev">
+        <h3>赌前事件 rollEvent("pre") · 18%</h3>
+        <ul>
+          <li>· 富婆撒钱 / 抛硬币</li>
+          <li>· 黑道保护费 / 递烟</li>
+          <li>· 醉汉 / 小偷 / 老赌棍</li>
+          <li>· 高利贷（借 G1500，3 局还）</li>
+          <li>· 发牌员 / 停电 / 算命 / 记者</li>
+        </ul>
+      </div>
+      <div class="node ev">
+        <h3>赌后事件 rollEvent("post") · 18%</h3>
+        <ul>
+          <li>· 富婆赏钱（两种）</li>
+          <li>· 黑道收钱 / 火并</li>
+          <li>· 后屋牌局（耗时 10 分钟）</li>
+          <li>· 捡钱包 / 粥摊</li>
+          <li>· 保安查房（没收道具）</li>
+        </ul>
+      </div>
+      <div class="node ev">
+        <h3>事件机制</h3>
+        <ul>
+          <li>· showEventModal 弹窗（z-index 75）</li>
+          <li>· pctAmt：金额随身家缩放</li>
+          <li>· toast 型 / 选择型按钮</li>
+          <li>· post 延迟 700ms 不盖结算</li>
         </ul>
       </div>
     </div>
@@ -217,20 +309,46 @@
           <li>· 盲注 ×10，冠军 G15,000 / 亚军 G5,000</li>
         </ul>
       </div>
+      <div class="node vip">
+        <h3>VIP 博饼桌</h3>
+        <ul>
+          <li>· 注码 5,000 / 10,000</li>
+          <li>· 灌铅骰子大注才有正期望</li>
+        </ul>
+      </div>
     </div>
   </div>
 
   <!-- 核心数据流：一局结算回路 -->
   <div class="flowbar">
-    <h3>核心数据流 · 一局结算回路（任意场所通用）</h3>
+    <h3>核心数据流 · 一局结算回路（任意场所通用，v12 加出千/事件）</h3>
     <div class="chain">
+      <span class="chip">进场所</span><span class="a">→</span>
+      <span class="chip gold">rollEvent("pre") 赌前事件</span><span class="a">→</span>
       <span class="chip">下注 / 开赛</span><span class="a">→</span>
+      <span class="chip orange">useCheat 出千判定（可选）</span><span class="a">→</span>
       <span class="chip red">扣注 addCoins(-bet)</span><span class="a">→</span>
       <span class="chip">比赛 / 牌局进行</span><span class="a">→</span>
       <span class="chip green">结算 赢则 addCoins(奖金)</span><span class="a">→</span>
       <span class="chip gold">businessTick 产业分红</span><span class="a">→</span>
+      <span class="chip">advanceClock 推夜钟</span><span class="a">→</span>
+      <span class="chip gold">rollEvent("post") 赌后事件</span><span class="a">→</span>
       <span class="chip purple">破产则发救助金</span><span class="a">→</span>
       <span class="chip">gsSave 存档</span>
+    </div>
+  </div>
+
+  <!-- 出千数据流 -->
+  <div class="flowbar">
+    <h3>出千道具数据流 · 购买 → 使用 → 效果 / 被抓</h3>
+    <div class="chain">
+      <span class="chip orange">黑市购买 addCheat(id,+1)</span><span class="a">→</span>
+      <span class="chip">场所触发 useCheat(id,mode)</span><span class="a">→</span>
+      <span class="chip red">addCheat(id,-1) 消耗</span><span class="a">→</span>
+      <span class="chip green">未被抓：效果生效</span><span class="a">→</span>
+      <span class="chip red">被抓 caught：罚款 + wanted+1</span><span class="a">→</span>
+      <span class="chip purple">有 pardon：罚款减半/不没收</span><span class="a">→</span>
+      <span class="chip red">wanted ≥3：blackout 封杀</span>
     </div>
   </div>
 
@@ -242,9 +360,14 @@
       <span class="chip">streak 连胜</span>
       <span class="chip">raceNo 场次</span>
       <span class="chip">dex 图鉴</span>
-      <span class="chip">stable 马厩(等级/经验/疲劳/属性)</span>
-      <span class="chip gold">assets 已购产业</span>
+      <span class="chip">stable 马厩</span>
+      <span class="chip gold">assets 产业</span>
       <span class="chip gold">vipUnlocked VIP资格</span>
+      <span class="chip orange">cheats 道具库存</span>
+      <span class="chip red">wanted 通缉 / blackout 封杀</span>
+      <span class="chip">debt 债务 / debtPer 分期</span>
+      <span class="chip" style="background:#7ad8ff;color:#000;">clock 夜钟 / nightNo 夜数</span>
+      <span class="chip">wins 通关数 / bestPeak 峰值</span>
     </div>
   </div>
 
@@ -253,11 +376,14 @@
     <span><i class="dot" style="background:var(--purple)"></i>扑克</span>
     <span><i class="dot" style="background:var(--red)"></i>21 点</span>
     <span><i class="dot" style="background:#2ed878"></i>足球</span>
-    <span><i class="dot" style="background:var(--yellow)"></i>置业 / VIP</span>
+    <span><i class="dot" style="background:var(--orange)"></i>黑市 / 出千</span>
+    <span><i class="dot" style="background:#7ad8ff"></i>博饼</span>
+    <span><i class="dot" style="background:var(--yellow)"></i>事件 / 置业 / VIP</span>
   </div>
 
   <div class="foot">
     箭头方向 = 加载与调用方向 · 所有场所只通过 shared.js 的 addCoins 操作金币，保证全局互通与单一数据源<br>
+    出千道具只在对应场所生效，通缉与封杀状态本夜有效 · 随机事件在进/出场所两个时点按 18% 触发<br>
     部署形态：本地 file:// 直开，或 GitHub Pages 公网访问（手机浏览器）
   </div>
 </div>
