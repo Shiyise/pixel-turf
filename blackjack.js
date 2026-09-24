@@ -172,10 +172,7 @@ const BlackjackModule = (()=>{
     }
     result={msg,cls,ret};
     if(ret>0) addCoins(ret);
-    if(GameState.coins===0){
-      addCoins(200);
-      toast("21点救助金 +G200");
-    }
+    if(GameState.coins<MIN_BET) claimBailout();
     businessTick();
     advanceClock(5);
     render();

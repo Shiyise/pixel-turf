@@ -843,6 +843,34 @@
   }
   @keyframes retireblink{50%{opacity:.6;}}
 
+  /* ========== 放弃今夜 / 破产救助条 ========== */
+  .btn-giveup{
+    width:100%;margin-top:8px;height:34px;cursor:pointer;
+    background:transparent;color:var(--muted);border:2px dashed #5a1020;
+    font-size:10px;
+  }
+  .btn-giveup.confirm{background:var(--red);color:#fff;border-style:solid;border-color:#000;}
+  .bailout-bar{
+    max-width:720px;margin:0 auto 22px;display:none;
+    background:#3a1018;border:3px solid var(--red);box-shadow:4px 4px 0 #000;
+    padding:12px 14px;gap:12px;align-items:center;flex-wrap:wrap;
+  }
+  .bailout-bar.show{display:flex;animation:bailblink 1.2s steps(2) infinite;}
+  @keyframes bailblink{50%{border-color:#7a2030;}}
+  .bailout-text{flex:1;min-width:200px;display:flex;flex-direction:column;gap:5px;}
+  .bailout-title{
+    font-family:"Press Start 2P",monospace;font-size:11px;color:#ff8a9a;
+  }
+  .bailout-desc{font-size:11px;color:#e8b8c0;line-height:1.6;}
+  .bailout-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .bailout-btn{
+    background:var(--yellow);color:#000;border:3px solid #000;min-height:46px;
+    padding:0 14px;cursor:pointer;font-family:"Press Start 2P",monospace;
+    font-size:9px;box-shadow:3px 3px 0 #000;
+  }
+  .bailout-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000;}
+  .bailout-btn:disabled{background:var(--panel-2);color:var(--muted);cursor:not-allowed;box-shadow:none;}
+
   /* ========== 一夜结算弹窗 ========== */
   .night-result{
     position:fixed;inset:0;z-index:200;display:none;
@@ -932,6 +960,18 @@
     <div class="goal-sub"><span id="goalLeftTime">18:00 · 距天亮 11:00</span></div>
     <div class="goal-meta" id="goalMeta"></div>
     <button class="btn-retire" id="btnRetire" disabled>尚未达标 G100,000</button>
+    <button class="btn-giveup" id="btnGiveUp">放弃今夜 · 重新开始</button>
+  </div>
+
+  <!-- 破产救助条：金币低于 G100 时自动出现 -->
+  <div class="bailout-bar" id="bailoutBar">
+    <div class="bailout-text">
+      <span class="bailout-title">BROKE · 身无分文</span>
+      <span class="bailout-desc">你已无力下注任何赌桌。领一笔救助金继续，或放弃这一夜从头再来。</span>
+    </div>
+    <div class="bailout-actions">
+      <button class="bailout-btn" id="btnClaimBailout">领救助金 G200（剩 3 次）</button>
+    </div>
   </div>
 
   <div class="map-grid">

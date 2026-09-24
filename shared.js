@@ -23,12 +23,18 @@ const GameState = {
   blackout: false,     // 黑市是否已被封杀
   debt: 0,             // 高利贷：剩余扣款局数
   debtPer: 0,          // 高利贷：每局扣款额
+  bailouts: 0,         // 本夜已领救助金次数（上限 3 次，新一夜重置）
 };
 
 /* 一夜通关：18:00 开始，次日 05:00 结束 */
 const NIGHT_START = 18*60;   // 1080
 const NIGHT_END   = 29*60;   // 1740（把次日时间按 24h 延展）
 const NIGHT_GOAL  = 100000;  // 天亮前金币达标即通关
+
+/* 破产救助：低于最低注码时可领，每夜上限次数 */
+const BAILOUT_AMT = 200;
+const BAILOUT_MAX = 3;
+const MIN_BET = 100;          // 全场最低下注门槛
 
 /* 可购置业：每在任意场所结算一局，所有生意按 income 发一次分红 */
 const PROPERTIES = [
@@ -60,6 +66,7 @@ function gsSave(){
       blackout: GameState.blackout,
       debt: GameState.debt,
       debtPer: GameState.debtPer,
+      bailouts: GameState.bailouts,
     }));
   }catch(e){}
 }
@@ -85,6 +92,7 @@ function gsLoad(){
     if(typeof d.blackout === "boolean") GameState.blackout = d.blackout;
     if(typeof d.debt === "number") GameState.debt = d.debt;
     if(typeof d.debtPer === "number") GameState.debtPer = d.debtPer;
+    if(typeof d.bailouts === "number") GameState.bailouts = d.bailouts;
     return true;
   }catch(e){ return false; }
 }
@@ -177,6 +185,42 @@ function renderGoalPanel(){
     retire.classList.toggle("ready", ready);
     retire.textContent = ready ? "功成身退 · 锁定通关" : "尚未达标 G100,000";
   }
+  renderBailoutBar();
+}
+
+/* 领救助金：金币低于最低注码、次数未用完时可领 */
+function claimBailout(){
+  if(GameState.runEnded){ toast("这一夜已经结束"); return false; }
+  if(GameState.coins >= MIN_BET){ toast("你还有钱下注，无需救助"); return false; }
+  if(GameState.bailouts >= BAILOUT_MAX){ toast("今夜救助次数已用完，只能重开一夜"); return false; }
+  GameState.bailouts++;
+  addCoins(BAILOUT_AMT);
+  toast("救助金 +G"+BAILOUT_AMT+"（今夜第 "+GameState.bailouts+" 次）");
+  renderBailoutBar();
+  return true;
+}
+
+/* 地图破产操作条：无力下注时出现 */
+function renderBailoutBar(){
+  const bar = $("bailoutBar");
+  if(!bar) return;
+  const broke = !GameState.runEnded && GameState.coins < MIN_BET;
+  bar.classList.toggle("show", broke);
+  const left = BAILOUT_MAX - GameState.bailouts;
+  const btn = $("btnClaimBailout");
+  if(btn){
+    btn.disabled = left<=0;
+    btn.textContent = left>0
+      ? ("领救助金 G"+BAILOUT_AMT+"（剩 "+left+" 次）")
+      : "救助次数已用完";
+  }
+}
+
+/* 放弃今夜：两段确认后重开（任何卡死状态都能从这里脱身） */
+function giveUpNight(confirm){
+  if(GameState.runEnded){ startNewNight(); return; }
+  if(!confirm){ toast("再点一次确认放弃这一夜，重新开始"); return; }
+  startNewNight();
 }
 
 /* 一夜结算 */
@@ -203,6 +247,7 @@ function startNewNight(){
   GameState.blackout = false;
   GameState.debt = 0;
   GameState.debtPer = 0;
+  GameState.bailouts = 0;
   hideNightResult();
   if(typeof hideEventModal === "function") hideEventModal();
   gsSave();
@@ -448,3 +493,18 @@ $("btnRetire").onclick = ()=>{
   else toast("身家达到 G100,000 才能功成身退");
 };
 $("btnNewNight").onclick = ()=>startNewNight();
+
+/* 破产救助条 / 放弃今夜 */
+$("btnClaimBailout").onclick = ()=>claimBailout();
+$("btnGiveUp").addEventListener("click", function(){
+  /* 两段确认：首次点击后 2.6 秒内再点生效 */
+  if(this.dataset.confirm!=="1"){
+    this.dataset.confirm="1";
+    this.textContent="确认放弃？再点一次";
+    this.classList.add("confirm");
+    clearTimeout(this._t);
+    this._t=setTimeout(()=>{ this.dataset.confirm="0"; this.textContent="放弃今夜 · 重新开始"; this.classList.remove("confirm"); }, 2600);
+    return;
+  }
+  giveUpNight(true);
+});

@@ -507,7 +507,7 @@ const FootballModule = (()=>{
     state.phase="end";
     f._justPlayed=true;
     if(ret>0) addCoins(ret);
-    if(GameState.coins===0){ addCoins(200); toast("救助金 +G200"); }
+    if(GameState.coins<MIN_BET) claimBailout();
     businessTick();
     advanceClock(45);
     gsSave();

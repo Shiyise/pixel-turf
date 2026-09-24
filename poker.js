@@ -131,7 +131,7 @@ const PokerModule = (()=>{
     const [,bb]=cashBlinds();
     if(GameState.coins<bb*10){
       if(vip){ toast("VIP 桌至少带 G"+(bb*10)+" 上桌，先回普通桌或地图"); return; }
-      if(GameState.coins<BB){ addCoins(200); toast("扑克室救助金 +G200"); }
+      if(GameState.coins<MIN_BET) claimBailout();
     }
     const botChips=vip?50000:1000;
     const players=makePlayers([
@@ -416,7 +416,7 @@ const PokerModule = (()=>{
       const me=P.players[0];
       pnl=me.chips-P.startCoins;
       GameState.coins=Math.max(0,me.chips);
-      if(!vip && GameState.coins<BB) GameState.coins=200;
+      if(!vip && GameState.coins<MIN_BET) claimBailout();
       gsSave(); syncCoinDisplays();
       businessTick();
     }
