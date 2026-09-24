@@ -417,11 +417,9 @@ const RaceModule = (()=>{
       }
     }
 
-    if(GameState.coins<=0){
-      addCoins(200);
-      setTimeout(()=>toast("BUST! +200"), 800);
-    }
+    if(GameState.coins<MIN_BET) claimBailout();
     businessTick();
+    trackNight("race");
     advanceClock(state.cupMode?30:20);
     GameState.raceNo += 1;
     gsSave(); renderTop();
@@ -541,6 +539,7 @@ const RaceModule = (()=>{
           renderMyPick();
           gsSave();
           toast("出售 "+name+" +G"+price);
+          unlockAch("seller");
           openStable();
         };
       });
@@ -597,6 +596,7 @@ const RaceModule = (()=>{
     gsSave();
     $("breedModal").classList.add("hidden");
     toast("小马诞生: "+HORSE_POOL[newId].name);
+    unlockAch("breeder");
     openStable();
   }
 

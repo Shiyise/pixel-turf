@@ -142,6 +142,8 @@ const BobingModule = (()=>{
         render();
         toast(loaded ? "灌铅骰子：本局掷出 "+BOBING_NAME[key] : "掷出 "+BOBING_NAME[key]);
         businessTick();
+        trackNight("bobing");
+        if(key==="zhuang"||key==="jin") unlockAch("bobing_king");
       }
     }, 90);
   }

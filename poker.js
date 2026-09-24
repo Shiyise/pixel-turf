@@ -446,6 +446,7 @@ const PokerModule = (()=>{
         tourResult={place:1, over:true};
         addCoins(cfg.prizes[1]);
         log("冠军! 奖金 G"+cfg.prizes[1]);
+        unlockAch("sng_champ");
         T.finished=true;
         businessTick();
       } else {
@@ -453,6 +454,7 @@ const PokerModule = (()=>{
       }
     }
     advanceClock(10);
+    trackNight("poker");
     renderAll();
     if(GameState.runEnded) return;
     showResultModal(pnl, tourResult);

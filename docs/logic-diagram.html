@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PIXEL TURF · 逻辑架构图 v13</title>
+<title>PIXEL TURF · 逻辑架构图 v14</title>
 <style>
   :root{
     --bg:#1a1c2c; --panel:#2f324a; --panel-2:#3a3d5c; --line:#151725;
@@ -95,7 +95,7 @@
 <body>
 <div class="wrap">
   <h1>PIXEL TURF 逻辑架构图</h1>
-  <div class="sub">v13 · 纯前端 · 原生 HTML/CSS/JS · 无构建 · localStorage 存档 · 金币全局互通 · 一夜通关 G100k · 破产救助/放弃重开</div>
+  <div class="sub">v14 · 纯前端 · 原生 HTML/CSS/JS · 无构建 · localStorage 存档 · 金币全局互通 · 一夜通关 G100k · 多结局 11 种 / 成就墙 16 项 / 遗产三选一</div>
 
   <!-- L0 入口 -->
   <div class="layer">
@@ -126,6 +126,9 @@
           <li>· <b style="color:var(--orange)">blackout 封杀 / debt 债务</b></li>
           <li>· <b style="color:#7ad8ff">clock 夜钟 / nightNo 夜数</b></li>
           <li>· <b style="color:#ff8a9a">bailouts 本夜救助次数</b></li>
+          <li>· <b style="color:var(--yellow)">achievements 成就（永久）</b></li>
+          <li>· <b style="color:var(--yellow)">seenEndings 结局图鉴（永久）</b></li>
+          <li>· <b style="color:var(--yellow)">nightStats 夜统计 / pendingLegacy</b></li>
           <li>· gsSave / gsLoad（localStorage）</li>
         </ul>
       </div>
@@ -323,6 +326,45 @@
     </div>
   </div>
 
+  <!-- L5 元玩法：成就 / 结局 / 遗产（v14） -->
+  <div class="layer" style="margin-top:16px;">
+    <div class="layer-tag" style="background:var(--yellow);">L5 · 元玩法（v14 新增 · 跨夜循环）</div>
+    <div class="nodes">
+      <div class="node vip">
+        <h3>多结局 judgeEnding（11 种）</h3>
+        <ul>
+          <li>· 成功 9：地产大亨/不死鸟/千王</li>
+          <li>· 马王/扑克脸/21点之神</li>
+          <li>· 赌球军师/博饼状元/赌神</li>
+          <li>· 失败 2：破产流浪汉/梦断天亮</li>
+          <li>· 优先级 tycoon&gt;phoenix&gt;cheat</li>
+          <li>· 场所路线：局数最多且≥4</li>
+        </ul>
+      </div>
+      <div class="node vip">
+        <h3>成就墙（16 项 · 永久）</h3>
+        <ul>
+          <li>· ACHIEVEMENTS 常量清单</li>
+          <li>· unlockAch：解锁 + toast</li>
+          <li>· 通关类：初战/自力更生/不死鸟</li>
+          <li>· 玩法类：SNG冠/21连胜/状元</li>
+          <li>· 养成类：图鉴/配种/卖马/贿赂</li>
+          <li>· end_all：集齐 11 结局</li>
+        </ul>
+      </div>
+      <div class="node vip">
+        <h3>遗产继承 chooseLegacy（三选一）</h3>
+        <ul>
+          <li>· cash 厚启本金：新夜 G3,000</li>
+          <li>· item 夹带随机黑市道具</li>
+          <li>· asset 保留最高价一处产业</li>
+          <li>· 再点一次可取消，可不选</li>
+          <li>· startNewNight 时应用</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
   <!-- 核心数据流：一局结算回路 -->
   <div class="flowbar">
     <h3>核心数据流 · 一局结算回路（任意场所通用，v12 加出千/事件）</h3>
@@ -369,6 +411,21 @@
     </div>
   </div>
 
+  <!-- v14 夜结算数据流 -->
+  <div class="flowbar">
+    <h3>夜结算数据流 · v14（endNight → 结局/成就 → 遗产 → startNewNight）</h3>
+    <div class="chain">
+      <span class="chip red">时钟到 05:00 / 功成身退</span><span class="a">→</span>
+      <span class="chip">endNight：runEnded=true</span><span class="a">→</span>
+      <span class="chip gold">judgeEnding：按夜统计/救助/产业定结局</span><span class="a">→</span>
+      <span class="chip gold">recordEnding：写结局图鉴（集齐解 end_all）</span><span class="a">→</span>
+      <span class="chip purple">unlockAch：通关/峰值/图鉴类成就</span><span class="a">→</span>
+      <span class="chip">showNightResult：称号+新成就+遗产三按钮</span><span class="a">→</span>
+      <span class="chip orange">chooseLegacy：cash/item/asset（可不选）</span><span class="a">→</span>
+      <span class="chip green">startNewNight：应用遗产，G1000/18:00/统计清零</span>
+    </div>
+  </div>
+
   <!-- 存档字段 -->
   <div class="flowbar">
     <h3>存档结构 · localStorage「pixelcasino1」</h3>
@@ -386,6 +443,10 @@
       <span class="chip" style="background:#7ad8ff;color:#000;">clock 夜钟 / nightNo 夜数</span>
       <span class="chip" style="background:#ff8a9a;color:#000;">bailouts 救助次数</span>
       <span class="chip">wins 通关数 / bestPeak 峰值</span>
+      <span class="chip gold">achievements 成就（v14）</span>
+      <span class="chip gold">seenEndings 结局图鉴（v14）</span>
+      <span class="chip gold">nightStats 夜统计（v14）</span>
+      <span class="chip gold">pendingLegacy 遗产选择（v14）</span>
     </div>
   </div>
 

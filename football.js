@@ -507,8 +507,10 @@ const FootballModule = (()=>{
     state.phase="end";
     f._justPlayed=true;
     if(ret>0) addCoins(ret);
+    if(f.bet && f.bet._rigged) unlockAch("briber");
     if(GameState.coins<MIN_BET) claimBailout();
     businessTick();
+    trackNight("fb");
     advanceClock(45);
     gsSave();
     renderEnd(f,ret);

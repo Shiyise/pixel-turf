@@ -24,7 +24,17 @@ const GameState = {
   debt: 0,             // 高利贷：剩余扣款局数
   debtPer: 0,          // 高利贷：每局扣款额
   bailouts: 0,         // 本夜已领救助金次数（上限 3 次，新一夜重置）
+  // 成就 / 结局 / 遗产
+  achievements: {},    // 已解锁成就 id -> true（跨夜永久保留）
+  seenEndings: {},     // 已打出结局 id -> true（跨夜永久保留）
+  nightStats: null,    // 本夜行为统计 {race,poker,bj,fb,bobing,cheats}
+  pendingLegacy: null, // 结算时选择的遗产 id（cash/item/asset），开始新夜时应用
 };
+
+/* 本夜行为统计的初始结构 */
+function freshNightStats(){
+  return {race:0, poker:0, bj:0, fb:0, bobing:0, cheats:0};
+}
 
 /* 一夜通关：18:00 开始，次日 05:00 结束 */
 const NIGHT_START = 18*60;   // 1080
@@ -45,6 +55,113 @@ const PROPERTIES = [
   {id:"casino", name:"PIXEL 赌场", price:500000, income:15000,mark:"赌", place:"goBlackjack"},
 ];
 const VIP_THRESHOLD = 50000;
+
+/* ===================== 成就 / 结局 / 遗产 ===================== */
+/* 成就清单（16 项）：跨夜永久，解锁后在成就墙高亮 */
+const ACHIEVEMENTS = [
+  {id:"first_win",  name:"初战告捷",   desc:"首次一夜通关"},
+  {id:"no_bailout", name:"自力更生",   desc:"不领救助金通关"},
+  {id:"phoenix",    name:"不死鸟",     desc:"领满 3 次救助后仍通关"},
+  {id:"cheat_king", name:"千王之王",   desc:"单夜出千 5 次并通关"},
+  {id:"tycoon",     name:"地产大亨",   desc:"买齐 5 处产业并通关"},
+  {id:"sng_champ",  name:"锦标赛之王", desc:"赢下一场德州 SNG"},
+  {id:"bj_streak5", name:"连庄好手",   desc:"21 点连赢 5 手"},
+  {id:"bobing_king",name:"金榜题名",   desc:"博饼掷出状元（含插金花）"},
+  {id:"dex_all",    name:"相马大师",   desc:"名马图鉴集齐 12 匹"},
+  {id:"peak_500k",  name:"半城之主",   desc:"身家峰值达到 G500,000"},
+  {id:"vip_once",   name:"贵宾光临",   desc:"首次解锁 VIP 厅"},
+  {id:"breeder",    name:"后继有人",   desc:"首次配种生下小马"},
+  {id:"seller",     name:"忍痛割爱",   desc:"首次出售马匹"},
+  {id:"briber",     name:"暗度陈仓",   desc:"赌球贿赂首次得手"},
+  {id:"nights_5",   name:"赌场常客",   desc:"度过 5 个夜晚"},
+  {id:"end_all",    name:"结局收藏家", desc:"打出全部 11 种结局"},
+];
+
+/* 结局清单：成功 9 种（按优先级判定）+ 失败 2 种 */
+const ENDINGS = {
+  tycoon:   {win:true,  name:"地产大亨",   desc:"你买下了半座城，赌场都要看你脸色"},
+  phoenix:  {win:true,  name:"不死鸟",     desc:"三次谷底爬起，烧尽黑夜的传奇"},
+  cheat_king:{win:true, name:"千王之王",   desc:"你的手法比运气更值钱"},
+  race:     {win:true,  name:"马王",       desc:"马蹄声是你这一夜的主旋律"},
+  poker:    {win:true,  name:"扑克脸",     desc:"你在牌桌上读穿了所有人"},
+  bj:       {win:true,  name:"21点之神",   desc:"庄家在你面前抬不起头"},
+  fb:       {win:true,  name:"赌球军师",   desc:"你算准了每一场比分"},
+  bobing:   {win:true,  name:"博饼状元",   desc:"六粒骰子都听你的话"},
+  default:  {win:true,  name:"赌神",       desc:"没有固定套路，你就是赢"},
+  bankrupt: {win:false, name:"破产流浪汉", desc:"三次救助也没能救活你"},
+  dawn:     {win:false, name:"梦断天亮",   desc:"天亮了，你的十万梦碎在 05:00"},
+};
+const ENDING_TOTAL = Object.keys(ENDINGS).length;
+
+/* 遗产三选一：开始新夜时三选一（也可放弃不选） */
+const LEGACY_CASH = 3000;
+const LEGACIES = [
+  {id:"cash",  name:"厚启本金", desc:"新一夜以 G3,000 开局（通常只有 G1,000）"},
+  {id:"item",  name:"夹带道具", desc:"把一件随机黑市道具带进新夜"},
+  {id:"asset", name:"保留产业", desc:"保留你名下价值最高的一处产业"},
+];
+const LEGACY_ITEMS = ["spy","swap","dope","dice","pardon"];
+
+/* 本夜行为埋点：每在一场所结算一局 */
+function trackNight(place){
+  if(!GameState.nightStats) GameState.nightStats = freshNightStats();
+  if(typeof GameState.nightStats[place] === "number") GameState.nightStats[place]++;
+  gsSave();
+}
+/* 出千埋点：成功使用一件道具 */
+function trackCheat(){
+  if(!GameState.nightStats) GameState.nightStats = freshNightStats();
+  GameState.nightStats.cheats++;
+  gsSave();
+}
+
+/* 解锁成就（已解锁则静默） */
+function unlockAch(id){
+  if(GameState.achievements[id]) return false;
+  const a = ACHIEVEMENTS.find(x=>x.id===id);
+  if(!a) return false;
+  GameState.achievements[id] = true;
+  gsSave();
+  setTimeout(()=>toast("成就解锁 | "+a.name), 400);
+  return true;
+}
+
+/* 结局判定：按 ENDINGS 优先级取本夜结局 */
+function judgeEnding(win){
+  const st = GameState.nightStats || freshNightStats();
+  const assetCnt = PROPERTIES.filter(p=>GameState.assets[p.id]).length;
+  if(!win){
+    return GameState.bailouts>=BAILOUT_MAX ? "bankrupt" : "dawn";
+  }
+  if(assetCnt>=PROPERTIES.length) return "tycoon";
+  if(GameState.bailouts>=BAILOUT_MAX) return "phoenix";
+  if(st.cheats>=5) return "cheat_king";
+  /* 场所路线：取局数最多且至少 3 局者 */
+  const places = ["race","poker","bj","fb","bobing"];
+  let best = "default", bestN = 3;
+  places.forEach(p=>{ if(st[p]>bestN){ bestN=st[p]; best=p; } });
+  return best;
+}
+
+/* 记录结局，解锁"结局收藏家"；返回本次是否新结局 */
+function recordEnding(eid){
+  const isNew = !GameState.seenEndings[eid];
+  GameState.seenEndings[eid] = true;
+  if(Object.keys(GameState.seenEndings).length >= ENDING_TOTAL) unlockAch("end_all");
+  gsSave();
+  return isNew;
+}
+
+/* 选择遗产（结算弹窗内三选一，再点一次可取消） */
+function chooseLegacy(id){
+  if(id==="asset"){
+    const has = PROPERTIES.some(p=>GameState.assets[p.id]);
+    if(!has){ toast("你名下没有产业可保留"); return; }
+  }
+  GameState.pendingLegacy = (GameState.pendingLegacy===id) ? null : id;
+  gsSave();
+  renderLegacyChoices();
+}
 
 function gsSave(){
   try{
@@ -67,6 +184,10 @@ function gsSave(){
       debt: GameState.debt,
       debtPer: GameState.debtPer,
       bailouts: GameState.bailouts,
+      achievements: GameState.achievements,
+      seenEndings: GameState.seenEndings,
+      nightStats: GameState.nightStats,
+      pendingLegacy: GameState.pendingLegacy,
     }));
   }catch(e){}
 }
@@ -93,6 +214,10 @@ function gsLoad(){
     if(typeof d.debt === "number") GameState.debt = d.debt;
     if(typeof d.debtPer === "number") GameState.debtPer = d.debtPer;
     if(typeof d.bailouts === "number") GameState.bailouts = d.bailouts;
+    if(d.achievements && typeof d.achievements === "object") GameState.achievements = d.achievements;
+    if(d.seenEndings && typeof d.seenEndings === "object") GameState.seenEndings = d.seenEndings;
+    if(d.nightStats && typeof d.nightStats === "object") GameState.nightStats = d.nightStats;
+    if(typeof d.pendingLegacy === "string") GameState.pendingLegacy = d.pendingLegacy;
     return true;
   }catch(e){ return false; }
 }
@@ -116,6 +241,7 @@ function addCoins(n){
   // 本夜净资产峰值达门槛：解锁 VIP 厅（新一夜重新锁）
   if(n > 0 && !GameState.vipUnlocked && GameState.coins >= VIP_THRESHOLD){
     GameState.vipUnlocked = true;
+    unlockAch("vip_once");
     setTimeout(()=>toast("身家破 G50,000 · VIP 厅已解锁"), 300);
   }
   syncCoinDisplays();
@@ -228,17 +354,44 @@ function endNight(manual){
   if(GameState.runEnded) return;
   GameState.runEnded = true;
   const win = GameState.coins>=NIGHT_GOAL;
+  const before = Object.keys(GameState.achievements);
   if(win) GameState.wins++;
   if(GameState.coins>GameState.bestPeak) GameState.bestPeak = GameState.coins;
+  /* 结局判定与记录 */
+  const eid = judgeEnding(win);
+  recordEnding(eid);
+  /* 成就判定 */
+  const st = GameState.nightStats || freshNightStats();
+  const assetCnt = PROPERTIES.filter(p=>GameState.assets[p.id]).length;
+  if(win){
+    unlockAch("first_win");
+    if(GameState.bailouts===0) unlockAch("no_bailout");
+    if(GameState.bailouts>=BAILOUT_MAX) unlockAch("phoenix");
+    if(st.cheats>=5) unlockAch("cheat_king");
+    if(assetCnt>=PROPERTIES.length) unlockAch("tycoon");
+  }
+  if(GameState.bestPeak>=500000) unlockAch("peak_500k");
+  if(GameState.dex.length>=12) unlockAch("dex_all");
+  if(GameState.nightNo>=5) unlockAch("nights_5");
+  /* 本次新解锁成就（供结算弹窗展示） */
+  GameState._newAchs = Object.keys(GameState.achievements)
+    .filter(id=>before.indexOf(id)<0);
   gsSave();
-  showNightResult(win, manual);
+  showNightResult(win, manual, eid);
 }
 
 /* 开始新一夜：清空 run 层（金币/产业/VIP/时钟/黑市/事件），保留 meta 层（马厩/图鉴/统计） */
 function startNewNight(){
+  /* 遗产：在清空前算好要保留的产业 */
+  const legacy = GameState.pendingLegacy;
+  let keepAsset = null;
+  if(legacy==="asset"){
+    const owned = PROPERTIES.filter(p=>GameState.assets[p.id]);
+    if(owned.length) keepAsset = owned.reduce((a,b)=>b.price>a.price?b:a).id;
+  }
   GameState.nightNo++;
-  GameState.coins = 1000;
-  GameState.assets = {};
+  GameState.coins = (legacy==="cash") ? LEGACY_CASH : 1000;
+  GameState.assets = keepAsset ? {[keepAsset]:true} : {};
   GameState.vipUnlocked = false;
   GameState.clock = NIGHT_START;
   GameState.runEnded = false;
@@ -248,27 +401,97 @@ function startNewNight(){
   GameState.debt = 0;
   GameState.debtPer = 0;
   GameState.bailouts = 0;
+  GameState.nightStats = freshNightStats();
+  /* 遗产：夹带随机道具 */
+  if(legacy==="item"){
+    const id = LEGACY_ITEMS[Math.floor(Math.random()*LEGACY_ITEMS.length)];
+    GameState.cheats[id] = 1;
+  }
+  GameState.pendingLegacy = null;
+  GameState._newAchs = null;
   hideNightResult();
   if(typeof hideEventModal === "function") hideEventModal();
   gsSave();
   syncCoinDisplays();
   syncClock();
   showView("map");
-  toast("第 "+GameState.nightNo+" 夜开始 · 本金 G1,000");
+  let legacyMsg = "";
+  if(legacy==="cash") legacyMsg=" | 遗产 厚启本金 G"+LEGACY_CASH;
+  else if(legacy==="item") legacyMsg=" | 遗产 夹带道具进夜";
+  else if(keepAsset) legacyMsg=" | 遗产 保留产业";
+  toast("第 "+GameState.nightNo+" 夜开始 · 本金 G"+GameState.coins.toLocaleString()+legacyMsg);
 }
 
 /* 结算弹窗 */
-function showNightResult(win, manual){
+function showNightResult(win, manual, eid){
   const ov = $("nightResult");
   ov.classList.add("show");
   ov.classList.toggle("win", win);
   ov.classList.toggle("lose", !win);
+  const end = ENDINGS[eid] || ENDINGS.dawn;
   $("nrTitle").textContent = win ? "一夜通关！" : "天亮了";
+  /* 结局称号 */
+  const tag = $("nrEnding");
+  if(tag){
+    tag.textContent = "结局 | " + end.name;
+    tag.className = "nr-ending" + (win?" win":" lose");
+  }
+  const endDesc = $("nrEndingDesc");
+  if(endDesc) endDesc.textContent = end.desc;
   $("nrSub").textContent = win
     ? (manual ? "你在日出前功成身退" : "你撑到了最后，身家达标")
     : "未能在 05:00 前赚到 G100,000";
   $("nrCoins").textContent = "最终身家 G"+GameState.coins.toLocaleString();
-  $("nrMeta").textContent = "第 "+GameState.nightNo+" 夜 · 累计通关 "+GameState.wins+" 次 · 历史最高 G"+GameState.bestPeak.toLocaleString();
+  /* 本夜新成就 */
+  const achBox = $("nrAchs");
+  if(achBox){
+    const news = GameState._newAchs || [];
+    achBox.innerHTML = news.length
+      ? news.map(id=>{
+          const a = ACHIEVEMENTS.find(x=>x.id===id);
+          return '<span class="nr-ach">成就 + '+a.name+'</span>';
+        }).join("")
+      : '<span class="nr-ach none">本夜无新成就</span>';
+  }
+  $("nrMeta").textContent = "第 "+GameState.nightNo+" 夜 · 累计通关 "+GameState.wins
+    +" 次 · 结局 "+Object.keys(GameState.seenEndings).length+"/"+ENDING_TOTAL
+    +" · 历史最高 G"+GameState.bestPeak.toLocaleString();
+  /* 遗产选择（重置为未选） */
+  GameState.pendingLegacy = null;
+  renderLegacyChoices();
+}
+
+/* 渲染遗产三选一（结算弹窗内） */
+function renderLegacyChoices(){
+  const box = $("nrLegacy");
+  if(!box) return;
+  const owned = PROPERTIES.some(p=>GameState.assets[p.id]);
+  box.innerHTML = LEGACIES.map(l=>{
+    const sel = GameState.pendingLegacy===l.id;
+    const disabled = l.id==="asset" && !owned;
+    return '<button class="legacy-btn'+(sel?" sel":"")+(disabled?" disabled":"")
+      +'" data-legacy="'+l.id+'"'+(disabled?" disabled":"")+'>'
+      +'<b>'+l.name+'</b><small>'+(disabled?"名下无产业":l.desc)+'</small></button>';
+  }).join("");
+  box.querySelectorAll("[data-legacy]").forEach(b=>{
+    b.onclick=()=>chooseLegacy(b.dataset.legacy);
+  });
+}
+
+/* 渲染成就墙 */
+function renderAchievements(){
+  const box = $("achList");
+  if(!box) return;
+  const got = Object.keys(GameState.achievements).length;
+  const cnt = $("achCount");
+  if(cnt) cnt.textContent = "已解锁 "+got+" / "+ACHIEVEMENTS.length;
+  box.innerHTML = ACHIEVEMENTS.map(a=>{
+    const on = !!GameState.achievements[a.id];
+    return '<div class="ach-item'+(on?" on":"")+'">'
+      +'<div class="ach-badge">'+(on?"★":"?")+'</div>'
+      +'<div class="ach-info"><div class="ach-name">'+(on?a.name:"？？？")+'</div>'
+      +'<div class="ach-desc">'+a.desc+'</div></div></div>';
+  }).join("");
 }
 function hideNightResult(){
   $("nightResult").classList.remove("show","win","lose");
@@ -453,6 +676,7 @@ function drawMapHorse(){
 gsLoad();
 /* 新档 / 旧档迁移：补合法夜钟 */
 if(typeof GameState.clock!=="number" || GameState.clock<NIGHT_START) GameState.clock=NIGHT_START;
+if(!GameState.nightStats) GameState.nightStats = freshNightStats();
 /* 新档送一匹赛马 */
 if(!GameState.stable || GameState.stable.length === 0){
   GameState.stable = [{
@@ -494,6 +718,16 @@ $("btnRetire").onclick = ()=>{
 };
 $("btnNewNight").onclick = ()=>startNewNight();
 
+/* 成就墙 */
+$("btnAchievements").onclick = ()=>{
+  renderAchievements();
+  $("achModal").classList.add("show");
+};
+$("achClose").onclick = ()=>$("achModal").classList.remove("show");
+$("achModal").addEventListener("click", function(e){
+  if(e.target===this) this.classList.remove("show");
+});
+
 /* 破产救助条 / 放弃今夜 */
 $("btnClaimBailout").onclick = ()=>claimBailout();
 $("btnGiveUp").addEventListener("click", function(){
@@ -508,3 +742,5 @@ $("btnGiveUp").addEventListener("click", function(){
   }
   giveUpNight(true);
 });
+/* 目标面板内的放弃按钮：转发给主放弃按钮（复用两段确认） */
+$("btnGiveUp2").onclick = ()=>$("btnGiveUp").click();

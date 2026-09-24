@@ -12,6 +12,7 @@ const BlackjackModule = (()=>{
   let bet=0, player=[], dealer=[], phase="bet", result=null, busy=false;
   let vip=false;
   let canSwap=false;   // 换牌器：本局是否可用
+  let winStreak=0;     // 连胜手数（和局不变，输牌清零）
   const CHIPS_NORMAL=[100,500,1000,5000];
   const CHIPS_VIP=[5000,10000,50000,100000];
   const chips=()=>vip?CHIPS_VIP:CHIPS_NORMAL;
@@ -171,9 +172,13 @@ const BlackjackModule = (()=>{
       msg="PUSH · 都是 "+ps; cls="push"; ret=bet;
     }
     result={msg,cls,ret};
+    /* 连胜：赢/黑杰克 +1（到 5 解锁），输清零，和局不变 */
+    if(cls==="win"||cls==="bj"){ winStreak++; if(winStreak===5) unlockAch("bj_streak5"); }
+    else if(cls==="lose") winStreak=0;
     if(ret>0) addCoins(ret);
     if(GameState.coins<MIN_BET) claimBailout();
     businessTick();
+    trackNight("bj");
     advanceClock(5);
     render();
   }

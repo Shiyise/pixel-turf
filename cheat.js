@@ -34,6 +34,7 @@ function useCheat(id, mode){
   if(cheatCount(id) <= 0){ toast("没有"+item.name); return false; }
   if(GameState.blackout && id!=="pardon"){ toast("黑市被封，道具已绝版"); return false; }
   addCheat(id, -1);
+  trackCheat();
   if(item.catchRate > 0 && Math.random() < item.catchRate){
     return caught(id, mode);
   }
