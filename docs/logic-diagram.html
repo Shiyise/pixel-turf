@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PIXEL TURF · 逻辑架构图 v12</title>
+<title>PIXEL TURF · 逻辑架构图 v13</title>
 <style>
   :root{
     --bg:#1a1c2c; --panel:#2f324a; --panel-2:#3a3d5c; --line:#151725;
@@ -95,7 +95,7 @@
 <body>
 <div class="wrap">
   <h1>PIXEL TURF 逻辑架构图</h1>
-  <div class="sub">v12 · 纯前端 · 原生 HTML/CSS/JS · 无构建 · localStorage 存档 · 金币全局互通 · 一夜通关 G100k</div>
+  <div class="sub">v13 · 纯前端 · 原生 HTML/CSS/JS · 无构建 · localStorage 存档 · 金币全局互通 · 一夜通关 G100k · 破产救助/放弃重开</div>
 
   <!-- L0 入口 -->
   <div class="layer">
@@ -125,6 +125,7 @@
           <li>· <b style="color:var(--orange)">cheats 道具 / wanted 通缉</b></li>
           <li>· <b style="color:var(--orange)">blackout 封杀 / debt 债务</b></li>
           <li>· <b style="color:#7ad8ff">clock 夜钟 / nightNo 夜数</b></li>
+          <li>· <b style="color:#ff8a9a">bailouts 本夜救助次数</b></li>
           <li>· gsSave / gsLoad（localStorage）</li>
         </ul>
       </div>
@@ -164,6 +165,9 @@
           <li>· 地产区：购买 / 已拥有态 / 分红汇总</li>
           <li>· VIP 卡：锁定灰阶 ↔ 解锁金色</li>
           <li>· 顶部"今晚目标"：夜钟 + G100k 进度</li>
+          <li>· <b style="color:#ff8a9a">破产救助条：coins&lt;G100 弹出</b></li>
+          <li>· <b style="color:#ff8a9a">领 G200（每夜限 3 次）</b></li>
+          <li>· <b style="color:#ff8a9a">放弃今夜按钮：两段确认重开</b></li>
         </ul>
       </div>
     </div>
@@ -333,7 +337,7 @@
       <span class="chip gold">businessTick 产业分红</span><span class="a">→</span>
       <span class="chip">advanceClock 推夜钟</span><span class="a">→</span>
       <span class="chip gold">rollEvent("post") 赌后事件</span><span class="a">→</span>
-      <span class="chip purple">破产则发救助金</span><span class="a">→</span>
+      <span class="chip purple">claimBailout 统一救助 G200</span><span class="a">→</span>
       <span class="chip">gsSave 存档</span>
     </div>
   </div>
@@ -352,6 +356,19 @@
     </div>
   </div>
 
+  <!-- 破产救助数据流（v13） -->
+  <div class="flowbar">
+    <h3>破产救助数据流 · v13（统一各场所旧自动救助）</h3>
+    <div class="chain">
+      <span class="chip red">coins &lt; MIN_BET(G100)</span><span class="a">→</span>
+      <span class="chip" style="background:#ff8a9a;color:#000;">地图 renderBailoutBar 弹红条</span><span class="a">→</span>
+      <span class="chip gold">claimBailout：+G200 / bailouts+1</span><span class="a">→</span>
+      <span class="chip red">bailouts=3：按钮禁用</span><span class="a">→</span>
+      <span class="chip purple">giveUpNight 两段确认</span><span class="a">→</span>
+      <span class="chip green">startNewNight：G1000/18:00/bailouts=0</span>
+    </div>
+  </div>
+
   <!-- 存档字段 -->
   <div class="flowbar">
     <h3>存档结构 · localStorage「pixelcasino1」</h3>
@@ -367,6 +384,7 @@
       <span class="chip red">wanted 通缉 / blackout 封杀</span>
       <span class="chip">debt 债务 / debtPer 分期</span>
       <span class="chip" style="background:#7ad8ff;color:#000;">clock 夜钟 / nightNo 夜数</span>
+      <span class="chip" style="background:#ff8a9a;color:#000;">bailouts 救助次数</span>
       <span class="chip">wins 通关数 / bestPeak 峰值</span>
     </div>
   </div>
